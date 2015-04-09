@@ -1,7 +1,8 @@
 tasks:
  - tox -e py34
  - tox -e py27
- - flake
+ - flake8
+ - isort -c -rc docker tests
  - coverage combine && coverage xml && coverage report -m
 
 coverage:
