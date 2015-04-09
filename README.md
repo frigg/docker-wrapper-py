@@ -1,1 +1,1 @@
-# docker-wrapper-py
+# docker-wrapper-py [![Build status](https://ci.frigg.io/badges/frigg/docker-wrapper-py/)](https://ci.frigg.io/frigg/docker-wrapper-py/last/) [![Coverage status](https://ci.frigg.io/badges/coverage/frigg/docker-wrapper-py/)](https://ci.frigg.io/frigg/docker-wrapper-py/last/)
