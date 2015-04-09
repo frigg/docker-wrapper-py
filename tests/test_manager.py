@@ -1,9 +1,10 @@
 import unittest
 from random import randint
-from manager import Docker
+
+from docker.manager import Docker
 
 
-class DockerBasicInteraction(unittest.TestCase):
+class DockerBasicInteractionTests(unittest.TestCase):
     def test_create_files(self):
         with Docker() as docker:
             docker.run("touch file1")
@@ -16,8 +17,10 @@ class DockerBasicInteraction(unittest.TestCase):
             docker.run("mkdir dir1/test")
             docker.run("mkdir dir2")
             docker.run("mkdir dir3")
-            self.assertEqual(docker.list_directories("", include_trailing_slash=False),
-                             ["dir1", "dir2", "dir3"])
+            self.assertEqual(
+                docker.list_directories("", include_trailing_slash=False),
+                ["dir1", "dir2", "dir3"]
+            )
 
     def test_create_and_list_files_in_sub_directory(self):
         with Docker() as docker:
@@ -42,7 +45,3 @@ class DockerBasicInteraction(unittest.TestCase):
             docker.create_file(file_name, file_content)
 
             self.assertEqual(docker.read_file(file_name), file_content)
-
-
-if __name__ == '__main__':
-    unittest.main()

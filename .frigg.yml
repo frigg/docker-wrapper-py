@@ -1,0 +1,9 @@
+tasks:
+ - tox -e py34
+ - tox -e py27
+ - flake
+ - coverage combine && coverage xml && coverage report -m
+
+coverage:
+  path: coverage.xml
+  parser: python

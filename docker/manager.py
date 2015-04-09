@@ -1,9 +1,7 @@
 import datetime
 import os
-import io
 import subprocess
 from time import sleep
-import tarfile
 
 
 def _execute(cmd):
