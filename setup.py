@@ -1,5 +1,4 @@
 # -*- coding: utf8 -*-
-import os
 from setuptools import setup, find_packages
 
 
@@ -11,7 +10,7 @@ def _read_long_description():
         return None
 
 setup(
-    name="docker-wrapper",
+    name='docker-wrapper',
     version='0.1.0',
     url='http://github.com/frigg/docker-wrapper-py',
     author='Fredrik Carlsen',
@@ -23,14 +22,12 @@ setup(
     test_suite='runtests.runtests',
     include_package_data=True,
     classifiers=[
-        "Programming Language :: Python",
+        'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
-        "Topic :: Software Development :: Libraries :: Python Modules",
-        "Framework :: Django",
-        "Environment :: Web Environment",
-        "Operating System :: OS Independent",
-        "Natural Language :: English",
+        'Topic :: Software Development :: Libraries :: Python Modules',
+        'Operating System :: OS Independent',
+        'Natural Language :: English',
     ]
 )
