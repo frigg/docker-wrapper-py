@@ -1,5 +1,5 @@
-docker-wrappe-py |frigg| |coverage| |version| |python|
-======================================================
+docker-wrapper-py |frigg| |coverage| |version| |python|
+=======================================================
 
 .. include:: quickstart.rst
 

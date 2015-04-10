@@ -13,7 +13,7 @@ extensions = [
 
 html_theme = 'sphinx_rtd_theme'
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-htmlhelp_basename = 'docker-wrappe-pydoc'
+htmlhelp_basename = 'docker-wrapper-pydoc'
 templates_path = ['_templates']
 
 source_suffix = '.rst'
@@ -21,7 +21,7 @@ master_doc = 'index'
 exclude_patterns = ['_build']
 
 # General information about the project.
-project = u'docker-wrappe-py'
+project = u'docker-wrapper-py'
 copyright = u'2015, Fredrik Carlsen, Rolf Erik Lekang'
 
 # The short X.Y version.
@@ -32,16 +32,16 @@ release = '1.0.0'
 pygments_style = 'sphinx'
 
 latex_documents = [
-    ('index', 'docker-wrappe-py.tex', u'docker-wrappe-py Documentation',
+    ('index', 'docker-wrapper-py.tex', u'docker-wrapper-py Documentation',
      u'Fredrik Carlsen, Rolf Erik Lekang', 'manual'),
 ]
 man_pages = [
-    ('index', 'docker-wrappe-py', u'docker-wrappe-py Documentation',
+    ('index', 'docker-wrapper-py', u'docker-wrapper-py Documentation',
      [u'Fredrik Carlsen, Rolf Erik Lekang'], 1)
 ]
 
 texinfo_documents = [
-    ('index', 'docker-wrappe-py', u'docker-wrappe-py Documentation',
-     u'Fredrik Carlsen, Rolf Erik Lekang', 'docker-wrappe-py', 'One line description of project.',
+    ('index', 'docker-wrapper-py', u'docker-wrapper-py Documentation',
+     u'Fredrik Carlsen, Rolf Erik Lekang', 'docker-wrapper-py', 'One line description of project.',
      'Miscellaneous'),
 ]
