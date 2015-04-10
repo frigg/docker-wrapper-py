@@ -4,6 +4,7 @@ tasks:
  - flake8
  - isort -c -rc docker tests
  - coverage combine && coverage xml && coverage report -m
+ - tox -e docs
 
 coverage:
   path: coverage.xml
