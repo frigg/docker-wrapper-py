@@ -45,3 +45,7 @@ class DockerBasicInteractionTests(unittest.TestCase):
             docker.create_file(file_name, file_content)
 
             self.assertEqual(docker.read_file(file_name), file_content)
+
+    def test__get_working_directory(self):
+        self.assertEqual(Docker._get_working_directory('directory'), '~/directory')
+        self.assertEqual(Docker._get_working_directory('/absolute/path'), '/absolute/path')

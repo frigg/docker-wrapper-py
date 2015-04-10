@@ -37,27 +37,32 @@ class Docker(object):
         self.image = image
 
     def run(self, cmd, working_directory=""):
-        if working_directory:
-            cmd = "cd {0} && {1}".format(working_directory, cmd)
-        else:
-            cmd = "cd ~/ && {0}".format(cmd)
-
-        return _execute('docker exec -i -t {0} bash -c "{1}"'.format(self.container_name, cmd))
+        working_directory = self._get_working_directory(working_directory)
+        return _execute('docker exec -i -t {container} bash -c "{command}"'.format(
+            container=self.container_name,
+            command="cd {0} && {1}".format(working_directory, cmd)
+        ))
 
     def read_file(self, path):
+        path = self._get_working_directory(path)
         return self.run("cat {0}".format(path)).out
 
     def create_file(self, path, content):
+        path = self._get_working_directory(path)
         return self.run("echo '{0}' >> {1}".format(content, path))
 
     def file_exist(self, path):
+        path = self._get_working_directory(path)
         return self.run("test -f {0}".format(path)).return_code == 0
 
     def directory_exist(self, path):
+        path = self._get_working_directory(path)
         return self.run("test -d {0}".format(path)).return_code == 0
 
     def list_files(self, path):
         result = []
+
+        path = self._get_working_directory(path)
 
         for file_path in self.run("ls -m {0}".format(path)).out.split(", "):
             full_path = os.path.join(path, file_path)
@@ -69,10 +74,9 @@ class Docker(object):
     def list_directories(self, path, include_trailing_slash=True):
         result = []
 
-        if path == "":
-            path = "~/"
+        working_directory = self._get_working_directory(path)
 
-        for file_path in self.run("cd {0} && ls -dm */".format(path)).out.split(", "):
+        for file_path in self.run("ls -dm */".format(path), working_directory).out.split(", "):
             if self.directory_exist(os.path.join(path, file_path)):
 
                 if include_trailing_slash:
@@ -92,3 +96,9 @@ class Docker(object):
         sleep(2)
         _execute('docker kill {0}'.format(self.container_name))
         _execute('docker rm {0}'.format(self.container_name))
+
+    @staticmethod
+    def _get_working_directory(working_directory):
+        if not working_directory.startswith('/'):
+            working_directory = '~/{}'.format(working_directory)
+        return working_directory
