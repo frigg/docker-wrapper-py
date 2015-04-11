@@ -1,11 +1,12 @@
 import unittest
 from random import randint
+
+from docker.manager import Docker
+
 try:
     from unittest import mock
 except ImportError:
     import mock
-
-from docker.manager import Docker
 
 
 class DockerBasicInteractionTests(unittest.TestCase):
