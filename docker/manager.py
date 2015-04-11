@@ -3,6 +3,8 @@ import os
 import subprocess
 from time import sleep
 
+from docker.errors import DockerUnavailableError
+
 
 def _execute(cmd):
     result = ProcessResult(command=cmd)
@@ -30,11 +32,16 @@ class ProcessResult(object):
 
 
 class Docker(object):
-
     def __init__(self, image="ubuntu", timeout=3600):
         self.container_name = "dyn-{0}".format(int(datetime.datetime.now().strftime("%s")) * 1000)
         self.timeout = timeout
         self.image = image
+
+    def __enter__(self):
+        return self.start()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return self.stop()
 
     def run(self, cmd, working_directory=""):
         working_directory = self._get_working_directory(working_directory)
@@ -86,16 +93,31 @@ class Docker(object):
 
         return result
 
-    def __enter__(self):
-        _execute('docker run -d --name {0} {1} /bin/sleep {2}'.format(self.container_name,
-                                                                      self.image,
-                                                                      self.timeout))
+    def start(self):
+        """
+        Starts a container based on the parameters passed to __init__.
+
+        :return: The docker object
+        """
+        result = _execute('docker run -d --name {0} {1} /bin/sleep {2}'.format(
+            self.container_name,
+            self.image,
+            self.timeout
+        ))
+        if not result.succeeded:
+            raise DockerUnavailableError('Starting the docker container failed.')
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def stop(self):
+        """
+        Stops the container started by this class instance.
+
+        :return: The docker object
+        """
         sleep(2)
         _execute('docker kill {0}'.format(self.container_name))
         _execute('docker rm {0}'.format(self.container_name))
+        return self
 
     @staticmethod
     def _get_working_directory(working_directory):

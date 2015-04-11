@@ -1,10 +1,15 @@
 import unittest
 from random import randint
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 
 from docker.manager import Docker
 
 
 class DockerBasicInteractionTests(unittest.TestCase):
+
     def test_create_files(self):
         with Docker() as docker:
             docker.run("touch file1")
@@ -49,3 +54,12 @@ class DockerBasicInteractionTests(unittest.TestCase):
     def test__get_working_directory(self):
         self.assertEqual(Docker._get_working_directory('directory'), '~/directory')
         self.assertEqual(Docker._get_working_directory('/absolute/path'), '/absolute/path')
+
+    @mock.patch('docker.manager.Docker.stop')
+    @mock.patch('docker.manager.Docker.start')
+    def test_with_statement(self, mock_start, mock_stop):
+        with Docker() as docker:
+            self.assertIsInstance(docker, Docker)
+
+        mock_start.assert_called_once_with()
+        mock_stop.assert_called_once_with()
