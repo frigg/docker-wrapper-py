@@ -22,7 +22,6 @@ def _execute(cmd):
     result.err = stderr.decode('utf-8').strip() if stderr else ''
     result.return_code = process.returncode
     result.succeeded = result.return_code == 0
-
     return result
 
 
@@ -118,6 +117,25 @@ class Docker(object):
         _execute('docker kill {0}'.format(self.container_name))
         _execute('docker rm {0}'.format(self.container_name))
         return self
+
+    @staticmethod
+    def wrap(*wrap_args, **wrap_kwargs):
+        """
+        Decorator that wraps the function call in a Docker with statement. It
+        accepts the same arguments. This decorator adds a docker manager instance
+        to the kwargs passed into the decorated function.
+
+        :return: The decorated function.
+        """
+        def activate(func):
+            def wrapper(*args, **kwargs):
+                with Docker(*wrap_args, **wrap_kwargs) as docker:
+                    kwargs['docker'] = docker
+                    return func(*args, **kwargs)
+
+            return wrapper
+
+        return activate
 
     @staticmethod
     def _get_working_directory(working_directory):

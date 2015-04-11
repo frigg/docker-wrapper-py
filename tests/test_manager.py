@@ -63,3 +63,14 @@ class DockerBasicInteractionTests(unittest.TestCase):
 
         mock_start.assert_called_once_with()
         mock_stop.assert_called_once_with()
+
+    @mock.patch('docker.manager.Docker.stop')
+    @mock.patch('docker.manager.Docker.start')
+    def test_wrap(self, mock_start, mock_stop):
+        @Docker.wrap()
+        def wrapped(docker):
+            self.assertIsInstance(docker, Docker)
+
+        wrapped()
+        mock_start.assert_called_once_with()
+        mock_stop.assert_called_once_with()
