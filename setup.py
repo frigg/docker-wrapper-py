@@ -11,7 +11,7 @@ def _read_long_description():
 
 setup(
     name='docker-wrapper',
-    version='0.2.0',
+    version='0.2.1',
     url='http://github.com/frigg/docker-wrapper-py',
     author='Fredrik Carlsen',
     author_email='fredrik@carlsen.io',
