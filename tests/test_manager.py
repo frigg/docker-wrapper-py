@@ -52,6 +52,10 @@ class DockerBasicInteractionTests(unittest.TestCase):
 
             self.assertEqual(docker.read_file(file_name), file_content)
 
+    def test_read_file_that_dont_exist(self):
+        with Docker() as docker:
+            self.assertIsNone(docker.read_file('no-file.txt'))
+
     def test__get_working_directory(self):
         self.assertEqual(Docker._get_working_directory('directory'), '~/directory')
         self.assertEqual(Docker._get_working_directory('/absolute/path'), '/absolute/path')

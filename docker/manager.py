@@ -51,7 +51,10 @@ class Docker(object):
 
     def read_file(self, path):
         path = self._get_working_directory(path)
-        return self.run('cat {0}'.format(path)).out
+        result = self.run('cat {0}'.format(path))
+        if result.succeeded:
+            return result.out
+        return None
 
     def create_file(self, path, content):
         path = self._get_working_directory(path)
