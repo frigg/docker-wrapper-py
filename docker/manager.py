@@ -31,8 +31,8 @@ class ProcessResult(object):
 
 
 class Docker(object):
-    def __init__(self, image="ubuntu", timeout=3600):
-        self.container_name = "dyn-{0}".format(int(datetime.datetime.now().strftime("%s")) * 1000)
+    def __init__(self, image='ubuntu', timeout=3600):
+        self.container_name = 'dyn-{0}'.format(int(datetime.datetime.now().strftime('%s')) * 1000)
         self.timeout = timeout
         self.image = image
 
@@ -42,35 +42,35 @@ class Docker(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         return self.stop()
 
-    def run(self, cmd, working_directory=""):
+    def run(self, cmd, working_directory=''):
         working_directory = self._get_working_directory(working_directory)
         return _execute('docker exec -i -t {container} bash -c "{command}"'.format(
             container=self.container_name,
-            command="cd {0} && {1}".format(working_directory, cmd)
+            command='cd {0} && {1}'.format(working_directory, cmd)
         ))
 
     def read_file(self, path):
         path = self._get_working_directory(path)
-        return self.run("cat {0}".format(path)).out
+        return self.run('cat {0}'.format(path)).out
 
     def create_file(self, path, content):
         path = self._get_working_directory(path)
-        return self.run("echo '{0}' >> {1}".format(content, path))
+        return self.run('echo "{0}" >> {1}'.format(content, path))
 
     def file_exist(self, path):
         path = self._get_working_directory(path)
-        return self.run("test -f {0}".format(path)).return_code == 0
+        return self.run('test -f {0}'.format(path)).return_code == 0
 
     def directory_exist(self, path):
         path = self._get_working_directory(path)
-        return self.run("test -d {0}".format(path)).return_code == 0
+        return self.run('test -d {0}'.format(path)).return_code == 0
 
     def list_files(self, path):
         result = []
 
         path = self._get_working_directory(path)
 
-        for file_path in self.run("ls -m {0}".format(path)).out.split(", "):
+        for file_path in self.run('ls -m {0}'.format(path)).out.split(', '):
             full_path = os.path.join(path, file_path)
             if self.file_exist(full_path) and not self.directory_exist(full_path):
                 result.append(file_path)
@@ -82,7 +82,7 @@ class Docker(object):
 
         working_directory = self._get_working_directory(path)
 
-        for file_path in self.run("ls -dm */".format(path), working_directory).out.split(", "):
+        for file_path in self.run('ls -dm */'.format(path), working_directory).out.split(', '):
             if self.directory_exist(os.path.join(path, file_path)):
 
                 if include_trailing_slash:
