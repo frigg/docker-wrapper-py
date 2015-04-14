@@ -44,7 +44,7 @@ class Docker(object):
 
     def run(self, cmd, working_directory=''):
         working_directory = self._get_working_directory(working_directory)
-        return _execute('docker exec -i -t {container} bash -c "{command}"'.format(
+        return _execute('docker exec -i {container} bash -c "{command}"'.format(
             container=self.container_name,
             command='cd {0} && {1}'.format(working_directory, cmd)
         ))
