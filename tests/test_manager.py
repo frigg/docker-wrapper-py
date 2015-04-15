@@ -18,6 +18,7 @@ class DockerManagerTests(unittest.TestCase):
     def test__get_working_directory(self):
         self.assertEqual(Docker._get_working_directory('directory'), '~/directory')
         self.assertEqual(Docker._get_working_directory('/absolute/path'), '/absolute/path')
+        self.assertEqual(Docker._get_working_directory('~/home/path'), '~/home/path')
 
     @mock.patch('docker.manager.Docker.stop')
     @mock.patch('docker.manager.Docker.start')

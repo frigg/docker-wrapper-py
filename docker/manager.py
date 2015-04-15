@@ -151,6 +151,6 @@ class Docker(object):
 
     @staticmethod
     def _get_working_directory(working_directory):
-        if not working_directory.startswith('/'):
-            working_directory = '~/{}'.format(working_directory)
-        return working_directory
+        if working_directory.startswith('/') or working_directory.startswith('~/'):
+            return working_directory
+        return '~/{}'.format(working_directory)
