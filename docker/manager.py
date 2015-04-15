@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import re
 import subprocess
 from time import sleep
 
@@ -53,10 +54,20 @@ class Docker(object):
         command_string = 'cd {working_directory} && {command}'
         if self.combine_outputs:
             command_string += ' 2>&1'
-        return _execute('docker exec -i {container} bash -c "{command}"'.format(
-            container=self.container_name,
-            command=command_string.format(working_directory=working_directory, command=cmd)
-        ))
+        result = _execute(
+            'docker exec -i {container} bash -c \'{command} ;  echo "--return-$?--"\''.format(
+                container=self.container_name,
+                command=command_string.format(working_directory=working_directory, command=cmd)
+            )
+        )
+
+        return_code_match = re.search(r'(?:\\n)?--return-(\d+)--$', result.out)
+        if return_code_match:
+            result.return_code = int(return_code_match.group(1))
+            result.out = result.out.replace(return_code_match.group(0), '')
+            if result.out.endswith('\n'):
+                result.out = result.out[:len(result.out) - 1]
+        return result
 
     def read_file(self, path):
         path = self._get_working_directory(path)
