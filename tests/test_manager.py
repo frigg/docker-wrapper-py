@@ -9,52 +9,11 @@ except ImportError:
     import mock
 
 
-class DockerBasicInteractionTests(unittest.TestCase):
-
-    def test_create_files(self):
-        with Docker() as docker:
-            docker.run('touch file1')
-            docker.run('touch file2')
-            self.assertEqual(docker.list_files(''), ['file1', 'file2'])
-
-    def test_create_directories(self):
-        with Docker() as docker:
-            docker.run('mkdir dir1')
-            docker.run('mkdir dir1/test')
-            docker.run('mkdir dir2')
-            docker.run('mkdir dir3')
-            self.assertEqual(
-                docker.list_directories('', include_trailing_slash=False),
-                ['dir1', 'dir2', 'dir3']
-            )
-
-    def test_create_and_list_files_in_sub_directory(self):
-        with Docker() as docker:
-            docker.run('mkdir builds')
-            docker.run('touch builds/readme.txt')
-
-            self.assertEqual(docker.list_files('builds'), ['readme.txt'])
-
-    def test_create_file_with_content(self):
-        with Docker() as docker:
-            file_name = 'readme.txt'
-            file_content = 'this is a test file'
-
-            self.assertFalse(docker.file_exist(file_name))
-            docker.create_file(file_name, file_content)
-            self.assertTrue(docker.file_exist(file_name))
-
-    def test_read_file_with_content(self):
-        with Docker() as docker:
-            file_name = 'readme.txt'
-            file_content = 'this is a test file {0}'.format(randint(5000, 5500))
-            docker.create_file(file_name, file_content)
-
-            self.assertEqual(docker.read_file(file_name), file_content)
-
-    def test_read_file_that_dont_exist(self):
-        with Docker() as docker:
-            self.assertIsNone(docker.read_file('no-file.txt'))
+class DockerManagerTests(unittest.TestCase):
+    """
+    This test class should contain tests for the docker manager
+    that does not invoke docker.
+    """
 
     def test__get_working_directory(self):
         self.assertEqual(Docker._get_working_directory('directory'), '~/directory')
@@ -80,10 +39,65 @@ class DockerBasicInteractionTests(unittest.TestCase):
         mock_start.assert_called_once_with()
         mock_stop.assert_called_once_with()
 
+
+class DockerInteractionTests(unittest.TestCase):
+    def setUp(self):
+        self.docker = Docker()
+        self.docker.start()
+
+    def tearDown(self):
+        self.docker.stop()
+
+    def test_create_files(self):
+        self.docker.run('touch file1')
+        self.docker.run('touch file2')
+        self.assertEqual(self.docker.list_files(''), ['file1', 'file2'])
+
+    def test_create_directories(self):
+        self.docker.run('mkdir dir1')
+        self.docker.run('mkdir dir1/test')
+        self.docker.run('mkdir dir2')
+        self.docker.run('mkdir dir3')
+        self.assertEqual(
+            self.docker.list_directories('', include_trailing_slash=False),
+            ['dir1', 'dir2', 'dir3']
+        )
+
+    def test_create_and_list_files_in_sub_directory(self):
+        self.docker.run('mkdir builds')
+        self.docker.run('touch builds/readme.txt')
+
+        self.assertEqual(self.docker.list_files('builds'), ['readme.txt'])
+
+    def test_create_file_with_content(self):
+        file_name = 'readme.txt'
+        file_content = 'this is a test file'
+
+        self.assertFalse(self.docker.file_exist(file_name))
+        self.docker.create_file(file_name, file_content)
+        self.assertTrue(self.docker.file_exist(file_name))
+
+    def test_read_file_with_content(self):
+        file_name = 'readme.txt'
+        file_content = 'this is a test file {0}'.format(randint(5000, 5500))
+        self.docker.run('echo \"{0}\" > ~/{1}; cat readme.txt'.format(file_content, file_name))
+
+        self.assertEqual(self.docker.read_file(file_name), file_content)
+
+    def test_read_file_that_dont_exist(self):
+        self.assertIsNone(self.docker.read_file('no-file.txt'))
+
+    def test_directory_exist(self):
+        self.assertTrue(self.docker.directory_exist('~/'))
+        self.assertFalse(self.docker.directory_exist('does-not-exist'))
+
+    def test_file_exist(self):
+        self.docker.run('touch file')
+        self.assertTrue(self.docker.file_exist('file'))
+        self.assertFalse(self.docker.file_exist('does-not-exist'))
+
     def test_combine_output(self):
-        docker = Docker(combine_outputs=True)
-        docker.start()
-        result = docker.run('ls does-not-exist')
+        self.docker.combine_outputs = True
+        result = self.docker.run('ls does-not-exist')
         self.assertEqual(result.err, '')
         self.assertEqual(result.out, 'ls: cannot access does-not-exist: No such file or directory')
-        docker.stop()
