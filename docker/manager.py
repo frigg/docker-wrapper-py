@@ -1,14 +1,18 @@
 import datetime
+import logging
 import os
 import subprocess
 from time import sleep
 
 from docker.errors import DockerUnavailableError
 
+logger = logging.getLogger(__name__)
+
 
 def _execute(cmd):
     result = ProcessResult(command=cmd)
 
+    logger.debug('Running command: "{0}"'.format(cmd))
     process = subprocess.Popen(
         cmd,
         shell=True,
@@ -22,6 +26,7 @@ def _execute(cmd):
     result.err = stderr.decode('utf-8').strip() if stderr else ''
     result.return_code = process.returncode
     result.succeeded = result.return_code == 0
+    logger.debug('Finished running of: {0}'.format(result.__dict__))
     return result
 
 
