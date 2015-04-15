@@ -26,14 +26,23 @@ def _execute(cmd):
     result.out = stdout.decode('utf-8').strip() if stdout else ''
     result.err = stderr.decode('utf-8').strip() if stderr else ''
     result.return_code = process.returncode
-    result.succeeded = result.return_code == 0
     logger.debug('Finished running of: {0}'.format(result.__dict__))
     return result
 
 
 class ProcessResult(object):
+    return_code = None
+    out = ''
+    err = ''
+
     def __init__(self, command):
         self.command = command
+
+    @property
+    def succeeded(self):
+        if self.return_code is None:
+            return None
+        return self.return_code == 0
 
 
 class Docker(object):
