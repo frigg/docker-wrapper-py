@@ -79,3 +79,11 @@ class DockerBasicInteractionTests(unittest.TestCase):
         wrapped()
         mock_start.assert_called_once_with()
         mock_stop.assert_called_once_with()
+
+    def test_combine_output(self):
+        docker = Docker(combine_outputs=True)
+        docker.start()
+        result = docker.run('ls does-not-exist')
+        self.assertEqual(result.err, '')
+        self.assertEqual(result.out, 'ls: cannot access does-not-exist: No such file or directory')
+        docker.stop()

@@ -36,10 +36,11 @@ class ProcessResult(object):
 
 
 class Docker(object):
-    def __init__(self, image='ubuntu', timeout=3600):
+    def __init__(self, image='ubuntu', timeout=3600, combine_outputs=False):
         self.container_name = 'dyn-{0}'.format(int(datetime.datetime.now().strftime('%s')) * 1000)
         self.timeout = timeout
         self.image = image
+        self.combine_outputs = combine_outputs
 
     def __enter__(self):
         return self.start()
@@ -49,9 +50,12 @@ class Docker(object):
 
     def run(self, cmd, working_directory=''):
         working_directory = self._get_working_directory(working_directory)
+        command_string = 'cd {working_directory} && {command}'
+        if self.combine_outputs:
+            command_string += ' 2>&1'
         return _execute('docker exec -i {container} bash -c "{command}"'.format(
             container=self.container_name,
-            command='cd {0} && {1}'.format(working_directory, cmd)
+            command=command_string.format(working_directory=working_directory, command=cmd)
         ))
 
     def read_file(self, path):
