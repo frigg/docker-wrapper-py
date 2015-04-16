@@ -55,8 +55,10 @@ class Docker(object):
     def __enter__(self):
         return self.start()
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        return self.stop()
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.stop()
+        if exc_value:
+            raise exc_value
 
     def run(self, cmd, working_directory=''):
         working_directory = self._get_working_directory(working_directory)

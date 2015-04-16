@@ -1,5 +1,6 @@
 import unittest
 from random import randint
+import six
 
 from docker.manager import Docker
 
@@ -24,7 +25,7 @@ class DockerManagerTests(unittest.TestCase):
     @mock.patch('docker.manager.Docker.start')
     def test_with_statement(self, mock_start, mock_stop):
         with Docker() as docker:
-            self.assertIsInstance(docker, Docker)
+            self.assertIsNotNone(docker)
 
         mock_start.assert_called_once_with()
         mock_stop.assert_called_once_with()
@@ -33,10 +34,25 @@ class DockerManagerTests(unittest.TestCase):
     @mock.patch('docker.manager.Docker.start')
     def test_wrap(self, mock_start, mock_stop):
         @Docker.wrap()
-        def wrapped(docker):
-            self.assertIsInstance(docker, Docker)
+        def wrapped(test, docker):
+            test.assertIsNotNone(docker)
+            return True
+        self.assertTrue(wrapped(self))
+        mock_start.assert_called_once_with()
+        mock_stop.assert_called_once_with()
 
-        wrapped()
+    @mock.patch('docker.manager.Docker.stop')
+    @mock.patch('docker.manager.Docker.start')
+    def test_with_statement_exception(self, mock_start, mock_stop):
+        if six.PY3:
+            with self.assertRaisesRegex(RuntimeError, 'something crazy happened'):
+                with Docker():
+                    raise RuntimeError('something crazy happened')
+        else:
+            with self.assertRaises(RuntimeError):
+                with Docker():
+                    raise RuntimeError('something crazy happened')
+
         mock_start.assert_called_once_with()
         mock_stop.assert_called_once_with()
 
