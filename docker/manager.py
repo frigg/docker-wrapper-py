@@ -46,7 +46,26 @@ class ProcessResult(object):
 
 
 class Docker(object):
+    """
+    Docker manager which can start and stop containers in addition to run commands with docker exec.
+    The manager also have a few helper functions for things like listing files and directories.
+    """
+
     def __init__(self, image='ubuntu', timeout=3600, combine_outputs=False):
+        """
+        Creates a docker manager. Each manager has a reference to a unique container name.
+
+        :param image: The image which the manager should use to start the container. It could be
+                      a local image or an image from the registry.
+        :type image: str
+        :param timeout: The time the docker container will live after running ``docker.start()`` in
+                        seconds.
+        :type timeout: int
+        :param combine_outputs: Setting this to True will put stderr output in stdout.
+        :type combine_outputs: bool
+        :return: A docker manager object.
+        :rtype: Docker
+        """
         self.container_name = 'dyn-{0}'.format(int(datetime.datetime.now().strftime('%s')) * 1000)
         self.timeout = timeout
         self.image = image
@@ -60,7 +79,20 @@ class Docker(object):
         if exc_value:
             raise exc_value
 
-    def run(self, cmd, working_directory=''):
+    def exec(self, command, working_directory=''):
+        """
+        Runs the command with docker exec in the given working directory.
+
+        :param command: The command that should be run with docker exec. The command will be wrapped
+                        in  `bash -c \'command\'".
+        :type command: str
+        :param working_directory: The path to the directory where the command should be run. This
+                                  will be evaluated with ``_get_working_directory``, thus relative
+                                  paths will become absolute paths.
+        :type working_directory: str
+        :return: A ProcessResult object containing information on the result of the command.
+        :rtype: ProcessResult
+        """
         working_directory = self._get_working_directory(working_directory)
         command_string = 'cd {working_directory} && {command}'
         if self.combine_outputs:
@@ -68,7 +100,7 @@ class Docker(object):
         result = _execute(
             'docker exec -i {container} bash -c \'{command} ;  echo "--return-$?--"\''.format(
                 container=self.container_name,
-                command=command_string.format(working_directory=working_directory, command=cmd)
+                command=command_string.format(working_directory=working_directory, command=command)
             )
         )
 
@@ -81,6 +113,13 @@ class Docker(object):
         return result
 
     def read_file(self, path):
+        """
+        Reads the content of the file on the given path. Returns None if the file does not exist.
+        :param path: The path to the file.
+        :type path: str
+        :return: The content of the file
+        :rtype: str
+        """
         path = self._get_working_directory(path)
         result = self.run('cat {0}'.format(path))
         if result.succeeded:
@@ -88,18 +127,46 @@ class Docker(object):
         return None
 
     def create_file(self, path, content):
+        """
+        Create file on the given path with the given content
+        :param path: The path to the file.
+        :type path: str
+        :param content: The content of the file.
+        :type content: str
+        :return: A object with the result of the create command.
+        :rtype: ProcessResult
+        """
         path = self._get_working_directory(path)
         return self.run('echo "{0}" >> {1}'.format(content, path))
 
     def file_exist(self, path):
+        """
+        Checks whether a file exists or not.
+        :param path: The path to the file.
+        :type path: str
+        :rtype: bool
+        """
         path = self._get_working_directory(path)
         return self.run('test -f {0}'.format(path)).return_code == 0
 
     def directory_exist(self, path):
+        """
+        Checks whether a directory exists or not.
+        :param path: The path to the directory.
+        :type path: str
+        :rtype: bool
+        """
         path = self._get_working_directory(path)
         return self.run('test -d {0}'.format(path)).return_code == 0
 
     def list_files(self, path):
+        """
+        List files on a given path.
+        :param path: The path to the directory.
+        :type path: str
+        :return: An list of file names
+        :rtype: list
+        """
         result = []
 
         path = self._get_working_directory(path)
@@ -112,6 +179,13 @@ class Docker(object):
         return result
 
     def list_directories(self, path, include_trailing_slash=True):
+        """
+        List directories on a given path.
+        :param path: The path to the directory.
+        :type path: str
+        :return: An list of directory names
+        :rtype: list
+        """
         result = []
 
         working_directory = self._get_working_directory(path)
@@ -173,6 +247,14 @@ class Docker(object):
 
     @staticmethod
     def _get_working_directory(working_directory):
+        """
+        Gets the path of the working working directory. It takes a path and converts it to an
+        appropriate absolute path.
+        :param working_directory:
+        :type working_directory: str
+        :return: An absolute path to the given working directory.
+        :rtype str:
+        """
         if working_directory.startswith('/') or working_directory.startswith('~/'):
             return working_directory
         return '~/{}'.format(working_directory)

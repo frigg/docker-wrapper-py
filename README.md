@@ -9,14 +9,14 @@
 Use it in a with statement:
 ```python
 with Docker() as docker:
-    docker.run('command')
+    docker.exec('command')
 ```
 
 or as a decorator:
 ```python
     @Docker.wrap()
     def run_command_in_container(command, docker)
-        docker.run(command)
+        docker.exec(command)
 ```
 
 Read the documentation on [docker-wrapper-py.readthedocs.org](http://docker-wrapper-py.readthedocs.org)
