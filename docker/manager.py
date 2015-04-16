@@ -2,47 +2,12 @@ import datetime
 import logging
 import os
 import re
-import subprocess
 from time import sleep
 
 from docker.errors import DockerUnavailableError
+from docker.helpers import execute
 
 logger = logging.getLogger(__name__)
-
-
-def _execute(cmd):
-    result = ProcessResult(command=cmd)
-
-    logger.debug('Running command: "{0}"'.format(cmd))
-    process = subprocess.Popen(
-        cmd,
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        close_fds=True
-    )
-
-    (stdout, stderr) = process.communicate()
-    result.out = stdout.decode('utf-8').strip() if stdout else ''
-    result.err = stderr.decode('utf-8').strip() if stderr else ''
-    result.return_code = process.returncode
-    logger.debug('Finished running of: {0}'.format(result.__dict__))
-    return result
-
-
-class ProcessResult(object):
-    return_code = None
-    out = ''
-    err = ''
-
-    def __init__(self, command):
-        self.command = command
-
-    @property
-    def succeeded(self):
-        if self.return_code is None:
-            return None
-        return self.return_code == 0
 
 
 class Docker(object):
@@ -97,7 +62,7 @@ class Docker(object):
         command_string = 'cd {working_directory} && {command}'
         if self.combine_outputs:
             command_string += ' 2>&1'
-        result = _execute(
+        result = execute(
             'docker exec -i {container} bash -c \'{command} ;  echo "--return-$?--"\''.format(
                 container=self.container_name,
                 command=command_string.format(working_directory=working_directory, command=command)
@@ -206,7 +171,7 @@ class Docker(object):
 
         :return: The docker object
         """
-        result = _execute('docker run -d --name {0} {1} /bin/sleep {2}'.format(
+        result = execute('docker run -d --name {0} {1} /bin/sleep {2}'.format(
             self.container_name,
             self.image,
             self.timeout
@@ -222,8 +187,8 @@ class Docker(object):
         :return: The docker object
         """
         sleep(2)
-        _execute('docker kill {0}'.format(self.container_name))
-        _execute('docker rm {0}'.format(self.container_name))
+        execute('docker kill {0}'.format(self.container_name))
+        execute('docker rm {0}'.format(self.container_name))
         return self
 
     @staticmethod
