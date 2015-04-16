@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import re
 import subprocess
 from time import sleep
 
@@ -25,21 +26,31 @@ def _execute(cmd):
     result.out = stdout.decode('utf-8').strip() if stdout else ''
     result.err = stderr.decode('utf-8').strip() if stderr else ''
     result.return_code = process.returncode
-    result.succeeded = result.return_code == 0
     logger.debug('Finished running of: {0}'.format(result.__dict__))
     return result
 
 
 class ProcessResult(object):
+    return_code = None
+    out = ''
+    err = ''
+
     def __init__(self, command):
         self.command = command
 
+    @property
+    def succeeded(self):
+        if self.return_code is None:
+            return None
+        return self.return_code == 0
+
 
 class Docker(object):
-    def __init__(self, image='ubuntu', timeout=3600):
+    def __init__(self, image='ubuntu', timeout=3600, combine_outputs=False):
         self.container_name = 'dyn-{0}'.format(int(datetime.datetime.now().strftime('%s')) * 1000)
         self.timeout = timeout
         self.image = image
+        self.combine_outputs = combine_outputs
 
     def __enter__(self):
         return self.start()
@@ -49,10 +60,23 @@ class Docker(object):
 
     def run(self, cmd, working_directory=''):
         working_directory = self._get_working_directory(working_directory)
-        return _execute('docker exec -i {container} bash -c "{command}"'.format(
-            container=self.container_name,
-            command='cd {0} && {1}'.format(working_directory, cmd)
-        ))
+        command_string = 'cd {working_directory} && {command}'
+        if self.combine_outputs:
+            command_string += ' 2>&1'
+        result = _execute(
+            'docker exec -i {container} bash -c \'{command} ;  echo "--return-$?--"\''.format(
+                container=self.container_name,
+                command=command_string.format(working_directory=working_directory, command=cmd)
+            )
+        )
+
+        return_code_match = re.search(r'(?:\\n)?--return-(\d+)--$', result.out)
+        if return_code_match:
+            result.return_code = int(return_code_match.group(1))
+            result.out = result.out.replace(return_code_match.group(0), '')
+            if result.out.endswith('\n'):
+                result.out = result.out[:len(result.out) - 1]
+        return result
 
     def read_file(self, path):
         path = self._get_working_directory(path)
@@ -147,6 +171,6 @@ class Docker(object):
 
     @staticmethod
     def _get_working_directory(working_directory):
-        if not working_directory.startswith('/'):
-            working_directory = '~/{}'.format(working_directory)
-        return working_directory
+        if working_directory.startswith('/') or working_directory.startswith('~/'):
+            return working_directory
+        return '~/{}'.format(working_directory)
