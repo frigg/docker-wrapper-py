@@ -1,7 +1,7 @@
-import datetime
 import logging
 import os
 import re
+import uuid
 from time import sleep
 
 from docker.errors import DockerUnavailableError
@@ -16,7 +16,7 @@ class Docker(object):
     The manager also have a few helper functions for things like listing files and directories.
     """
 
-    def __init__(self, image='ubuntu', timeout=3600, combine_outputs=False):
+    def __init__(self, image='ubuntu', name_prefix = 'dyn', timeout=3600, combine_outputs=False):
         """
         Creates a docker manager. Each manager has a reference to a unique container name.
 
@@ -31,7 +31,7 @@ class Docker(object):
         :return: A docker manager object.
         :rtype: Docker
         """
-        self.container_name = 'dyn-{0}'.format(int(datetime.datetime.now().strftime('%s')) * 1000)
+        self.container_name = '{0}-{1}'.format(name_prefix, uuid.uuid4())
         self.timeout = timeout
         self.image = image
         self.combine_outputs = combine_outputs
