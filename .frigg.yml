@@ -6,6 +6,9 @@ tasks:
  - coverage combine && coverage xml && coverage report -m
  - tox -e docs
 
+services:
+ - docker
+
 coverage:
   path: coverage.xml
   parser: python
