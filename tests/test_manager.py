@@ -1,5 +1,6 @@
 import unittest
 from random import randint
+
 import six
 
 from docker.manager import Docker
