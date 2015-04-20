@@ -118,3 +118,6 @@ class DockerInteractionTests(unittest.TestCase):
         result = self.docker.run('ls does-not-exist')
         self.assertEqual(result.err, '')
         self.assertEqual(result.out, 'ls: cannot access does-not-exist: No such file or directory')
+
+    def test_privilege(self):
+        Docker(privilege=True).start()

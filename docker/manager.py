@@ -16,7 +16,8 @@ class Docker(object):
     The manager also have a few helper functions for things like listing files and directories.
     """
 
-    def __init__(self, image='ubuntu', name_prefix = 'dyn', timeout=3600, combine_outputs=False):
+    def __init__(self, image='ubuntu', name_prefix='dyn', timeout=3600, privilege=False,
+                 combine_outputs=False):
         """
         Creates a docker manager. Each manager has a reference to a unique container name.
 
@@ -26,6 +27,9 @@ class Docker(object):
         :param timeout: The time the docker container will live after running ``docker.start()`` in
                         seconds.
         :type timeout: int
+        :param privilege: If set to True the docker container will be run with the privilege
+                          parameter.
+        :type privilege: bool
         :param combine_outputs: Setting this to True will put stderr output in stdout.
         :type combine_outputs: bool
         :return: A docker manager object.
@@ -34,6 +38,7 @@ class Docker(object):
         self.container_name = '{0}-{1}'.format(name_prefix, uuid.uuid4())
         self.timeout = timeout
         self.image = image
+        self.privilege = privilege
         self.combine_outputs = combine_outputs
 
     def __enter__(self):
@@ -171,7 +176,12 @@ class Docker(object):
 
         :return: The docker object
         """
-        result = execute('docker run -d --name {0} {1} /bin/sleep {2}'.format(
+        if self.privilege:
+            command_string = 'docker run -d --privileged --name {0} {1} /bin/sleep {2}'
+        else:
+            command_string = 'docker run -d --name {0} {1} /bin/sleep {2}'
+
+        result = execute(command_string.format(
             self.container_name,
             self.image,
             self.timeout
