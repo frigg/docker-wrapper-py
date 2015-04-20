@@ -44,7 +44,7 @@ class Docker(object):
         if exc_value:
             raise exc_value
 
-    def exec(self, command, working_directory=''):
+    def run(self, command, working_directory=''):
         """
         Runs the command with docker exec in the given working directory.
 
