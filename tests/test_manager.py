@@ -38,6 +38,7 @@ class DockerManagerTests(unittest.TestCase):
         def wrapped(test, docker):
             test.assertIsNotNone(docker)
             return True
+
         self.assertTrue(wrapped(self))
         mock_start.assert_called_once_with()
         mock_stop.assert_called_once_with()
@@ -56,6 +57,17 @@ class DockerManagerTests(unittest.TestCase):
 
         mock_start.assert_called_once_with()
         mock_stop.assert_called_once_with()
+
+    @mock.patch('docker.manager.execute')
+    @mock.patch('re.search', lambda *x: None)
+    def test_quotation_mark_handling(self, mock_run):
+        docker = Docker()
+        docker.run('echo "hi there"')
+        docker.run("echo 'hi there'")
+        expected = ('docker exec -i {} bash -c \'cd ~/ && echo "hi there" ;  '
+                    'echo "--return-$?--"\''.format(docker.container_name))
+
+        mock_run.assert_has_calls([mock.call(expected), mock.call(expected)])
 
 
 class DockerInteractionTests(unittest.TestCase):

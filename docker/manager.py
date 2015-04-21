@@ -64,6 +64,7 @@ class Docker(object):
         :rtype: ProcessResult
         """
         working_directory = self._get_working_directory(working_directory)
+        command = command.replace('\'', '"')
         command_string = 'cd {working_directory} && {command}'
         if self.combine_outputs:
             command_string += ' 2>&1'
