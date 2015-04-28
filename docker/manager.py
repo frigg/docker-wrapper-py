@@ -24,6 +24,8 @@ class Docker(object):
         :param image: The image which the manager should use to start the container. It could be
                       a local image or an image from the registry.
         :type image: str
+        :param name_prefix: All image names are prefixed with this string.
+        :type name_prefix: str
         :param timeout: The time the docker container will live after running ``docker.start()`` in
                         seconds.
         :type timeout: int
