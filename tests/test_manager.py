@@ -69,6 +69,14 @@ class DockerManagerTests(unittest.TestCase):
 
         mock_run.assert_has_calls([mock.call(expected), mock.call(expected)])
 
+    @mock.patch('docker.manager.execute')
+    @mock.patch('re.search', lambda *x: None)
+    def test_env_variables(self, mock_run):
+        docker = Docker(env_variables={'CI': 1, 'FRIGG': 1})
+        docker.run('ls')
+        mock_run.assert_called_once_with('docker exec -i {} bash -c \'FRIGG=1 CI=1 cd ~/ && ls ;'
+                                         '  echo "--return-$?--"\''.format(docker.container_name))
+
 
 class DockerInteractionTests(unittest.TestCase):
     def setUp(self):

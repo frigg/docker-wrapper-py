@@ -17,7 +17,7 @@ class Docker(object):
     """
 
     def __init__(self, image='ubuntu', name_prefix='dyn', timeout=3600, privilege=False,
-                 combine_outputs=False):
+                 combine_outputs=False, env_variables=None):
         """
         Creates a docker manager. Each manager has a reference to a unique container name.
 
@@ -42,6 +42,9 @@ class Docker(object):
         self.image = image
         self.privilege = privilege
         self.combine_outputs = combine_outputs
+        self.env_variables = {}
+        if env_variables:
+            self.env_variables.update(env_variables)
 
     def __enter__(self):
         return self.start()
@@ -70,8 +73,16 @@ class Docker(object):
         command_string = 'cd {working_directory} && {command}'
         if self.combine_outputs:
             command_string += ' 2>&1'
+
+        env_string = ' '.join([
+            '{0}={1}'.format(key, self.env_variables[key]) for key in self.env_variables
+        ])
+        if len(env_string):
+            env_string += ' '
+
         result = execute(
-            'docker exec -i {container} bash -c \'{command} ;  echo "--return-$?--"\''.format(
+            'docker exec -i {container} bash -c \'{envs}{command} ;  echo "--return-$?--"\''.format(
+                envs=env_string,
                 container=self.container_name,
                 command=command_string.format(working_directory=working_directory, command=command)
             )
