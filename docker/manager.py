@@ -17,7 +17,7 @@ class Docker(object):
     """
 
     def __init__(self, image='ubuntu', name_prefix='dyn', timeout=3600, privilege=False,
-                 combine_outputs=False, env_variables=None):
+                 combine_outputs=False, env_variables=None, ports_mapping=None):
         """
         Creates a docker manager. Each manager has a reference to a unique container name.
 
@@ -34,6 +34,9 @@ class Docker(object):
         :type privilege: bool
         :param combine_outputs: Setting this to True will put stderr output in stdout.
         :type combine_outputs: bool
+        :param ports_mapping: Map ports from docker container to host machine,
+            format ['4080:40480', '5000:5000']
+        :type ports_mapping: list
         :return: A docker manager object.
         :rtype: Docker
         """
@@ -45,6 +48,11 @@ class Docker(object):
         self.env_variables = {}
         if env_variables:
             self.env_variables.update(env_variables)
+
+        self.ports = ""
+        if ports_mapping:
+            for port_mapping in ports_mapping:
+                self.ports = " -p {0} ".format(port_mapping)
 
     def __enter__(self):
         return self.start()
@@ -191,11 +199,12 @@ class Docker(object):
         :return: The docker object
         """
         if self.privilege:
-            command_string = 'docker run -d --privileged --name {0} {1} /bin/sleep {2}'
+            command_string = 'docker run -d --privileged {0} --name {1} {2} /bin/sleep {3}'
         else:
-            command_string = 'docker run -d --name {0} {1} /bin/sleep {2}'
+            command_string = 'docker run -d {0} --name {1} {2} /bin/sleep {3}'
 
         result = execute(command_string.format(
+            self.ports,
             self.container_name,
             self.image,
             self.timeout

@@ -77,6 +77,16 @@ class DockerManagerTests(unittest.TestCase):
         mock_run.assert_called_once_with('docker exec -i {} bash -c \'FRIGG=1 CI=1 cd ~/ && ls ;'
                                          '  echo "--return-$?--"\''.format(docker.container_name))
 
+    @mock.patch('docker.manager.start')
+    def test_ports_mappping(self, mock_run):
+        docker = Docker(ports_mapping=["4080:4080"])
+        mock_run.assert_called_once_with(
+            'docker run -d --privileged -p 4080:4080 --name {0} {1} /bin/sleep {2}'.format(
+                docker.container_name,
+                docker.image,
+                docker.timeout
+            ))
+
 
 class DockerInteractionTests(unittest.TestCase):
     def setUp(self):
