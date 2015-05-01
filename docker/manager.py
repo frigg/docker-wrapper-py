@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import uuid
+from collections import OrderedDict
 from time import sleep
 
 from docker.errors import DockerUnavailableError
@@ -35,7 +36,7 @@ class Docker(object):
         :param combine_outputs: Setting this to True will put stderr output in stdout.
         :type combine_outputs: bool
         :param ports_mapping: Map ports from docker container to host machine,
-            format ['4080:40480', '5000:5000']
+                              format ['4080:40480', '5000:5000']
         :type ports_mapping: list
         :return: A docker manager object.
         :rtype: Docker
@@ -45,14 +46,13 @@ class Docker(object):
         self.image = image
         self.privilege = privilege
         self.combine_outputs = combine_outputs
-        self.env_variables = {}
+        self.env_variables = OrderedDict()
         if env_variables:
-            self.env_variables.update(env_variables)
+            self.env_variables.update(sorted(env_variables.items(), key=lambda t: t[0]))
 
-        self.ports = ""
+        self.ports = ''
         if ports_mapping:
-            for port_mapping in ports_mapping:
-                self.ports = " -p {0} ".format(port_mapping)
+            self.ports = ' '.join(['-p {0}'.format(port_mapping) for port_mapping in ports_mapping])
 
     def __enter__(self):
         return self.start()
@@ -85,6 +85,7 @@ class Docker(object):
         env_string = ' '.join([
             '{0}={1}'.format(key, self.env_variables[key]) for key in self.env_variables
         ])
+
         if len(env_string):
             env_string += ' '
 
@@ -233,6 +234,7 @@ class Docker(object):
 
         :return: The decorated function.
         """
+
         def activate(func):
             def wrapper(*args, **kwargs):
                 with Docker(*wrap_args, **wrap_kwargs) as docker:
