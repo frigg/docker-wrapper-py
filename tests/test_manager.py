@@ -74,8 +74,30 @@ class DockerManagerTests(unittest.TestCase):
     def test_env_variables(self, mock_run):
         docker = Docker(env_variables={'CI': 1, 'FRIGG': 1})
         docker.run('ls')
-        mock_run.assert_called_once_with('docker exec -i {} bash -c \'FRIGG=1 CI=1 cd ~/ && ls ;'
+        mock_run.assert_called_once_with('docker exec -i {} bash -c \'CI=1 FRIGG=1 cd ~/ && ls ;'
                                          '  echo "--return-$?--"\''.format(docker.container_name))
+
+    @mock.patch('docker.manager.execute')
+    def test_single_port_mappping(self, mock_run):
+        with Docker(ports_mapping=["4080:4080"]) as docker:
+            mock_run.assert_called_once_with(
+                'docker run -d -p 4080:4080 --name {0} {1} /bin/sleep {2}'.format(
+                    docker.container_name,
+                    docker.image,
+                    docker.timeout
+                ))
+
+    @mock.patch('docker.manager.execute')
+    def test_multiple_port_mapppings(self, mock_run):
+        ports = ["4080:4080", "8080:8080", "4443:4443"]
+        with Docker(ports_mapping=ports) as docker:
+            mock_run.assert_called_once_with(
+                'docker run -d {0} --name {1} {2} /bin/sleep {3}'.format(
+                    ' '.join(["-p {0}".format(port_mapping) for port_mapping in ports]),
+                    docker.container_name,
+                    docker.image,
+                    docker.timeout
+                ))
 
 
 class DockerInteractionTests(unittest.TestCase):
