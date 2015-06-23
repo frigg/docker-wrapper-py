@@ -78,7 +78,8 @@ class Docker(object):
         """
         working_directory = self._get_working_directory(working_directory)
         command = command.replace('\'', '"')
-        command_string = 'cd {working_directory} && {command}'
+        command_string = 'cd {working_directory} && {envs} {command}'
+
         if self.combine_outputs:
             command_string += ' 2>&1'
 
@@ -86,14 +87,15 @@ class Docker(object):
             '{0}={1}'.format(key, self.env_variables[key]) for key in self.env_variables
         ])
 
-        if len(env_string):
-            env_string += ' '
-
         result = execute(
-            'docker exec -i {container} bash -c \'{envs}{command} ;  echo "--return-$?--"\''.format(
+            'docker exec -i {container} bash -c \'{command} ;  echo "--return-$?--"\''.format(
                 envs=env_string,
                 container=self.container_name,
-                command=command_string.format(working_directory=working_directory, command=command)
+                command=command_string.format(
+                    working_directory=working_directory,
+                    command=command,
+                    envs=env_string
+                )
             )
         )
 
