@@ -211,7 +211,9 @@ class Docker(object):
             self.timeout
         ))
         if not result.succeeded:
-            raise DockerUnavailableError('Starting the docker container failed.')
+            raise DockerUnavailableError(
+                'Starting the docker container failed.\n{0}'.format(result.err)
+            )
         return self
 
     def stop(self):
