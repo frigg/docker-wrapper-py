@@ -64,7 +64,7 @@ class DockerManagerTests(unittest.TestCase):
         docker = Docker()
         docker.run('echo "hi there"')
         docker.run("echo 'hi there'")
-        expected = ('docker exec -i {} bash -c \'cd ~/ && echo "hi there" ;  '
+        expected = ('docker exec -i {} bash -c \'cd ~/ &&  echo "hi there" ;  '
                     'echo "--return-$?--"\''.format(docker.container_name))
 
         mock_run.assert_has_calls([mock.call(expected), mock.call(expected)])
@@ -74,7 +74,7 @@ class DockerManagerTests(unittest.TestCase):
     def test_env_variables(self, mock_run):
         docker = Docker(env_variables={'CI': 1, 'FRIGG': 1})
         docker.run('ls')
-        mock_run.assert_called_once_with('docker exec -i {} bash -c \'CI=1 FRIGG=1 cd ~/ && ls ;'
+        mock_run.assert_called_once_with('docker exec -i {} bash -c \'cd ~/ && CI=1 FRIGG=1 ls ;'
                                          '  echo "--return-$?--"\''.format(docker.container_name))
 
     @mock.patch('docker.manager.execute')
