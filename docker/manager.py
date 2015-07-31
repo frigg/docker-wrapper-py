@@ -110,6 +110,7 @@ class Docker(object):
     def read_file(self, path):
         """
         Reads the content of the file on the given path. Returns None if the file does not exist.
+
         :param path: The path to the file.
         :type path: str
         :return: The content of the file
@@ -124,6 +125,7 @@ class Docker(object):
     def create_file(self, path, content):
         """
         Create file on the given path with the given content
+
         :param path: The path to the file.
         :type path: str
         :param content: The content of the file.
@@ -137,6 +139,7 @@ class Docker(object):
     def file_exist(self, path):
         """
         Checks whether a file exists or not.
+
         :param path: The path to the file.
         :type path: str
         :rtype: bool
@@ -147,6 +150,7 @@ class Docker(object):
     def directory_exist(self, path):
         """
         Checks whether a directory exists or not.
+
         :param path: The path to the directory.
         :type path: str
         :rtype: bool
@@ -157,6 +161,7 @@ class Docker(object):
     def list_files(self, path):
         """
         List files on a given path.
+
         :param path: The path to the directory.
         :type path: str
         :return: An list of file names
@@ -176,6 +181,7 @@ class Docker(object):
     def list_directories(self, path, include_trailing_slash=True):
         """
         List directories on a given path.
+
         :param path: The path to the directory.
         :type path: str
         :return: An list of directory names
@@ -254,6 +260,7 @@ class Docker(object):
         """
         Gets the path of the working working directory. It takes a path and converts it to an
         appropriate absolute path.
+
         :param working_directory:
         :type working_directory: str
         :return: An absolute path to the given working directory.
