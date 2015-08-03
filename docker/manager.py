@@ -122,19 +122,23 @@ class Docker(object):
             return result.out
         return None
 
-    def create_file(self, path, content):
+    def write_file(self, path, content, append=False):
         """
-        Create file on the given path with the given content
+        Write the given content to path.
+        Overwrites the file if append is set to False.
 
         :param path: The path to the file.
         :type path: str
         :param content: The content of the file.
         :type content: str
+        :param append: Set to False to overwrite file, defaults to False.
+        :type append: bool
         :return: A object with the result of the create command.
         :rtype: ProcessResult
         """
         path = self._get_working_directory(path)
-        return self.run('echo "{0}" >> {1}'.format(content, path))
+        modifier = '>>' if append else '>'
+        return self.run('echo "{0}" {1} {2}'.format(content, modifier, path))
 
     def file_exist(self, path):
         """
