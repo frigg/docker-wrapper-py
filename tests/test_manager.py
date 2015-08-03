@@ -3,6 +3,7 @@ from random import randint
 
 import six
 
+from docker.errors import DockerFileNotFoundError
 from docker.manager import Docker
 
 try:
@@ -113,6 +114,15 @@ class DockerInteractionTests(unittest.TestCase):
         self.docker.run('touch file2')
         self.assertEqual(self.docker.list_files(''), ['file1', 'file2'])
 
+    def test_list_files_bad_path(self):
+        path = '/bad/path'
+        self.assertRaisesRegexp(
+            DockerFileNotFoundError,
+            'Could not find the file or directory at path {0}'.format(path),
+            self.docker.list_files,
+            path
+        )
+
     def test_list_directories(self):
         self.docker.run('mkdir dir1')
         self.docker.run('mkdir dir1/test')
@@ -121,6 +131,15 @@ class DockerInteractionTests(unittest.TestCase):
         self.assertEqual(
             self.docker.list_directories('', include_trailing_slash=False),
             ['dir1', 'dir2', 'dir3']
+        )
+
+    def test_list_directories_bad_path(self):
+        path = '/bad/path'
+        self.assertRaisesRegexp(
+            DockerFileNotFoundError,
+            'Could not find the file or directory at path {0}'.format(path),
+            self.docker.list_directories,
+            path
         )
 
     def test_create_and_list_files_in_sub_directory(self):
@@ -137,7 +156,13 @@ class DockerInteractionTests(unittest.TestCase):
         self.assertEqual(self.docker.read_file(file_name), file_content)
 
     def test_read_file_that_dont_exist(self):
-        self.assertIsNone(self.docker.read_file('no-file.txt'))
+        path = '/bad/path'
+        self.assertRaisesRegexp(
+            DockerFileNotFoundError,
+            'Could not find the file or directory at path {0}'.format(path),
+            self.docker.read_file,
+            path
+        )
 
     def test_directory_exist(self):
         self.assertTrue(self.docker.directory_exist('~/'))
