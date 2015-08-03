@@ -108,12 +108,12 @@ class DockerInteractionTests(unittest.TestCase):
     def tearDown(self):
         self.docker.stop()
 
-    def test_create_files(self):
+    def test_list_files(self):
         self.docker.run('touch file1')
         self.docker.run('touch file2')
         self.assertEqual(self.docker.list_files(''), ['file1', 'file2'])
 
-    def test_create_directories(self):
+    def test_list_directories(self):
         self.docker.run('mkdir dir1')
         self.docker.run('mkdir dir1/test')
         self.docker.run('mkdir dir2')
@@ -128,14 +128,6 @@ class DockerInteractionTests(unittest.TestCase):
         self.docker.run('touch builds/readme.txt')
 
         self.assertEqual(self.docker.list_files('builds'), ['readme.txt'])
-
-    def test_create_file_with_content(self):
-        file_name = 'readme.txt'
-        file_content = 'this is a test file'
-
-        self.assertFalse(self.docker.file_exist(file_name))
-        self.docker.create_file(file_name, file_content)
-        self.assertTrue(self.docker.file_exist(file_name))
 
     def test_read_file_with_content(self):
         file_name = 'readme.txt'
@@ -164,3 +156,23 @@ class DockerInteractionTests(unittest.TestCase):
 
     def test_privilege(self):
         Docker(privilege=True).start()
+
+    def test_write_file_append(self):
+        path = 'readme.txt'
+        old_content = 'hi'
+        content = 'this is a readme'
+        self.docker.run('echo "{0}" > {1}'.format(old_content, path))
+
+        self.docker.write_file(path, content, append=True)
+        written_content = self.docker.read_file(path)
+        self.assertEqual(written_content, '{0}\n{1}'.format(old_content, content))
+
+    def test_write_file_no_append(self):
+        path = 'readme.txt'
+        old_content = 'hi'
+        content = 'this is a readme'
+        self.docker.run('echo "{0}" > {1}'.format(old_content, path))
+
+        self.docker.write_file(path, content, append=False)
+        written_content = self.docker.read_file(path)
+        self.assertEqual(written_content, content)
