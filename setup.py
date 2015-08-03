@@ -1,4 +1,6 @@
 # -*- coding: utf8 -*-
+import re
+import sys
 from setuptools import setup, find_packages
 
 
@@ -9,9 +11,22 @@ def _read_long_description():
     except Exception:
         return None
 
+with open('docker/__init__.py', 'r') as fd:
+    version = re.search(
+        r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
+        fd.read(),
+        re.MULTILINE
+    ).group(1)
+
+try:
+    from semantic_release import setup_hook
+    setup_hook(sys.argv)
+except ImportError:
+    pass
+
 setup(
     name='docker-wrapper',
-    version='0.7.0',
+    version=version,
     url='http://github.com/frigg/docker-wrapper-py',
     author='Fredrik Carlsen',
     author_email='fredrik@carlsen.io',
