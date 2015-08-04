@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
+FILE_NOT_FOUND_PREDICATE = 'No such file or directory'
+
+
 class DockerWrapperBaseError(Exception):
+    pass
+
+
+class DockerUnknownFileError(DockerWrapperBaseError):
     pass
 
 

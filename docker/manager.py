@@ -5,7 +5,7 @@ import uuid
 from collections import OrderedDict
 from time import sleep
 
-from docker.errors import DockerFileNotFoundError, DockerUnavailableError
+from docker import errors
 from docker.helpers import execute
 
 logger = logging.getLogger(__name__)
@@ -116,11 +116,16 @@ class Docker(object):
         :return: The content of the file
         :rtype: str
         :raises DockerFileNotFoundError: If given an invalid path
+        :raises DockerUnknownFileError: For other errors
         """
         path = self._get_working_directory(path)
         result = self.run('cat {0}'.format(path))
+
         if not result.succeeded:
-            raise DockerFileNotFoundError(path)
+            if errors.FILE_NOT_FOUND_PREDICATE in result.err:
+                raise errors.DockerFileNotFoundError(path)
+
+            raise errors.DockerUnknownFileError(result.err)
 
         return result.out
 
@@ -173,6 +178,7 @@ class Docker(object):
         :return: An list of file names
         :rtype: list
         :raises DockerFileNotFoundError: If given an invalid path
+        :raises DockerUnknownFileError: For other errors
         """
 
         files = []
@@ -180,7 +186,10 @@ class Docker(object):
         result = self.run('ls -m {0}'.format(path))
 
         if not result.succeeded:
-            raise DockerFileNotFoundError(path)
+            if errors.FILE_NOT_FOUND_PREDICATE in result.err:
+                raise errors.DockerFileNotFoundError(path)
+
+            raise errors.DockerUnknownFileError(result.err)
 
         for file_path in result.out.split(', '):
             full_path = os.path.join(path, file_path)
@@ -198,6 +207,7 @@ class Docker(object):
         :return: An list of directory names
         :rtype: list
         :raises DockerFileNotFoundError: If given an invalid path
+        :raises DockerUnknownFileError: For other errors
         """
 
         files = []
@@ -205,7 +215,10 @@ class Docker(object):
         result = self.run('ls -dm */'.format(path), path)
 
         if not result.succeeded:
-            raise DockerFileNotFoundError(path)
+            if errors.FILE_NOT_FOUND_PREDICATE in result.err:
+                raise errors.DockerFileNotFoundError(path)
+
+            raise errors.DockerUnknownFileError(result.err)
 
         for file_path in result.out.split(', '):
             if self.directory_exist(os.path.join(path, file_path)):
@@ -234,10 +247,12 @@ class Docker(object):
             self.image,
             self.timeout
         ))
+
         if not result.succeeded:
-            raise DockerUnavailableError(
+            raise errors.DockerUnavailableError(
                 'Starting the docker container failed.\n{0}'.format(result.err)
             )
+
         return self
 
     def stop(self):

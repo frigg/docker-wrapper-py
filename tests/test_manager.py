@@ -3,13 +3,17 @@ from random import randint
 
 import six
 
-from docker.errors import DockerFileNotFoundError
+from docker.errors import DockerFileNotFoundError, DockerUnknownFileError
+from docker.helpers import ProcessResult
 from docker.manager import Docker
 
 try:
     from unittest import mock
 except ImportError:
     import mock
+
+unknown_error_result = ProcessResult('test')
+unknown_error_result.err = 'Unknown error'
 
 
 class DockerManagerTests(unittest.TestCase):
@@ -99,6 +103,42 @@ class DockerManagerTests(unittest.TestCase):
                     docker.image,
                     docker.timeout
                 ))
+
+    @mock.patch('docker.manager.execute')
+    @mock.patch('docker.manager.Docker.run', return_value=unknown_error_result)
+    def test_read_file_unknown_error(self, run_mock, execute_mock):
+        with Docker() as docker:
+            path = 'test-file'
+            self.assertRaisesRegexp(
+                DockerUnknownFileError,
+                unknown_error_result.err,
+                docker.read_file,
+                path
+            )
+
+    @mock.patch('docker.manager.execute')
+    @mock.patch('docker.manager.Docker.run', return_value=unknown_error_result)
+    def test_list_files_unknown_error(self, run_mock, execute_mock):
+        with Docker() as docker:
+            path = 'path'
+            self.assertRaisesRegexp(
+                DockerUnknownFileError,
+                unknown_error_result.err,
+                docker.list_files,
+                path
+            )
+
+    @mock.patch('docker.manager.execute')
+    @mock.patch('docker.manager.Docker.run', return_value=unknown_error_result)
+    def test_list_directories_unknown_error(self, run_mock, execute_mock):
+        with Docker() as docker:
+            path = 'path'
+            self.assertRaisesRegexp(
+                DockerUnknownFileError,
+                unknown_error_result.err,
+                docker.list_directories,
+                path
+            )
 
 
 class DockerInteractionTests(unittest.TestCase):
