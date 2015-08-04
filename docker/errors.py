@@ -6,10 +6,6 @@ class DockerWrapperBaseError(Exception):
     pass
 
 
-class DockerUnknownFileError(DockerWrapperBaseError):
-    pass
-
-
 class DockerUnavailableError(DockerWrapperBaseError):
     def __init__(self, message=None):
         super(DockerUnavailableError, self).__init__(message or 'Docker is not available')

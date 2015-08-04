@@ -116,7 +116,7 @@ class Docker(object):
         :return: The content of the file
         :rtype: str
         :raises DockerFileNotFoundError: If given an invalid path
-        :raises DockerUnknownFileError: For other errors
+        :raises DockerWrapperBaseError: For other errors
         """
         path = self._get_working_directory(path)
         result = self.run('cat {0}'.format(path))
@@ -125,7 +125,7 @@ class Docker(object):
             if errors.FILE_NOT_FOUND_PREDICATE in result.err:
                 raise errors.DockerFileNotFoundError(path)
 
-            raise errors.DockerUnknownFileError(result.err)
+            raise errors.DockerWrapperBaseError(result.err)
 
         return result.out
 
@@ -178,7 +178,7 @@ class Docker(object):
         :return: An list of file names
         :rtype: list
         :raises DockerFileNotFoundError: If given an invalid path
-        :raises DockerUnknownFileError: For other errors
+        :raises DockerWrapperBaseError: For other errors
         """
 
         files = []
@@ -189,7 +189,7 @@ class Docker(object):
             if errors.FILE_NOT_FOUND_PREDICATE in result.err:
                 raise errors.DockerFileNotFoundError(path)
 
-            raise errors.DockerUnknownFileError(result.err)
+            raise errors.DockerWrapperBaseError(result.err)
 
         for file_path in result.out.split(', '):
             full_path = os.path.join(path, file_path)
@@ -207,7 +207,7 @@ class Docker(object):
         :return: An list of directory names
         :rtype: list
         :raises DockerFileNotFoundError: If given an invalid path
-        :raises DockerUnknownFileError: For other errors
+        :raises DockerWrapperBaseError: For other errors
         """
 
         files = []
@@ -218,7 +218,7 @@ class Docker(object):
             if errors.FILE_NOT_FOUND_PREDICATE in result.err:
                 raise errors.DockerFileNotFoundError(path)
 
-            raise errors.DockerUnknownFileError(result.err)
+            raise errors.DockerWrapperBaseError(result.err)
 
         for file_path in result.out.split(', '):
             if self.directory_exist(os.path.join(path, file_path)):

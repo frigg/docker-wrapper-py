@@ -3,7 +3,7 @@ from random import randint
 
 import six
 
-from docker.errors import DockerFileNotFoundError, DockerUnknownFileError
+from docker.errors import DockerFileNotFoundError, DockerWrapperBaseError
 from docker.helpers import ProcessResult
 from docker.manager import Docker
 
@@ -106,11 +106,11 @@ class DockerManagerTests(unittest.TestCase):
 
     @mock.patch('docker.manager.execute')
     @mock.patch('docker.manager.Docker.run', return_value=unknown_error_result)
-    def test_read_file_unknown_error(self, run_mock, execute_mock):
+    def test_read_file_unknown_error(self, mock_run, mock_execute):
         with Docker() as docker:
             path = 'test-file'
             self.assertRaisesRegexp(
-                DockerUnknownFileError,
+                DockerWrapperBaseError,
                 unknown_error_result.err,
                 docker.read_file,
                 path
@@ -118,11 +118,11 @@ class DockerManagerTests(unittest.TestCase):
 
     @mock.patch('docker.manager.execute')
     @mock.patch('docker.manager.Docker.run', return_value=unknown_error_result)
-    def test_list_files_unknown_error(self, run_mock, execute_mock):
+    def test_list_files_unknown_error(self, mock_run, mock_execute):
         with Docker() as docker:
             path = 'path'
             self.assertRaisesRegexp(
-                DockerUnknownFileError,
+                DockerWrapperBaseError,
                 unknown_error_result.err,
                 docker.list_files,
                 path
@@ -130,11 +130,11 @@ class DockerManagerTests(unittest.TestCase):
 
     @mock.patch('docker.manager.execute')
     @mock.patch('docker.manager.Docker.run', return_value=unknown_error_result)
-    def test_list_directories_unknown_error(self, run_mock, execute_mock):
+    def test_list_directories_unknown_error(self, mock_run, mock_execute):
         with Docker() as docker:
             path = 'path'
             self.assertRaisesRegexp(
-                DockerUnknownFileError,
+                DockerWrapperBaseError,
                 unknown_error_result.err,
                 docker.list_directories,
                 path
