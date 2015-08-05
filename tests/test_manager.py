@@ -84,61 +84,66 @@ class DockerManagerTests(unittest.TestCase):
 
     @mock.patch('docker.manager.execute')
     def test_single_port_mappping(self, mock_run):
-        with Docker(ports_mapping=["4080:4080"]) as docker:
-            mock_run.assert_called_once_with(
-                'docker run -d -p 4080:4080 --name {0} {1} /bin/sleep {2}'.format(
-                    docker.container_name,
-                    docker.image,
-                    docker.timeout
-                ))
+        docker = Docker(ports_mapping=['4080:4080'])
+        docker.start()
+        mock_run.assert_called_once_with(
+            'docker run -d -p 4080:4080 --name {0} {1} /bin/sleep {2}'.format(
+                docker.container_name,
+                docker.image,
+                docker.timeout
+            ))
 
     @mock.patch('docker.manager.execute')
     def test_multiple_port_mapppings(self, mock_run):
         ports = ["4080:4080", "8080:8080", "4443:4443"]
-        with Docker(ports_mapping=ports) as docker:
-            mock_run.assert_called_once_with(
-                'docker run -d {0} --name {1} {2} /bin/sleep {3}'.format(
-                    ' '.join(["-p {0}".format(port_mapping) for port_mapping in ports]),
-                    docker.container_name,
-                    docker.image,
-                    docker.timeout
-                ))
+        docker = Docker(ports_mapping=ports)
+        docker.start()
+        mock_run.assert_called_once_with(
+            'docker run -d {0} --name {1} {2} /bin/sleep {3}'.format(
+                ' '.join(["-p {0}".format(port_mapping) for port_mapping in ports]),
+                docker.container_name,
+                docker.image,
+                docker.timeout
+            ))
 
     @mock.patch('docker.manager.execute')
     @mock.patch('docker.manager.Docker.run', return_value=unknown_error_result)
     def test_read_file_unknown_error(self, mock_run, mock_execute):
-        with Docker() as docker:
-            path = 'test-file'
-            self.assertRaisesRegexp(
-                DockerWrapperBaseError,
-                unknown_error_result.err,
-                docker.read_file,
-                path
-            )
+        docker = Docker()
+        docker.start()
+        path = 'test-file'
+        self.assertRaisesRegexp(
+            DockerWrapperBaseError,
+            unknown_error_result.err,
+            docker.read_file,
+            path
+        )
 
     @mock.patch('docker.manager.execute')
     @mock.patch('docker.manager.Docker.run', return_value=unknown_error_result)
     def test_list_files_unknown_error(self, mock_run, mock_execute):
-        with Docker() as docker:
-            path = 'path'
-            self.assertRaisesRegexp(
-                DockerWrapperBaseError,
-                unknown_error_result.err,
-                docker.list_files,
-                path
-            )
+        docker = Docker()
+        docker.start()
+        path = 'path'
+        self.assertRaisesRegexp(
+            DockerWrapperBaseError,
+            unknown_error_result.err,
+            docker.list_files,
+            path
+        )
 
     @mock.patch('docker.manager.execute')
     @mock.patch('docker.manager.Docker.run', return_value=unknown_error_result)
     def test_list_directories_unknown_error(self, mock_run, mock_execute):
-        with Docker() as docker:
-            path = 'path'
-            self.assertRaisesRegexp(
-                DockerWrapperBaseError,
-                unknown_error_result.err,
-                docker.list_directories,
-                path
-            )
+        docker = Docker()
+        docker.start()
+        path = 'path'
+        self.assertRaisesRegexp(
+            DockerWrapperBaseError,
+            unknown_error_result.err,
+            docker.list_directories,
+            path
+        )
 
 
 class DockerInteractionTests(unittest.TestCase):
