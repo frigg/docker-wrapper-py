@@ -3,12 +3,17 @@ from random import randint
 
 import six
 
+from docker.errors import DockerFileNotFoundError, DockerWrapperBaseError
+from docker.helpers import ProcessResult
 from docker.manager import Docker
 
 try:
     from unittest import mock
 except ImportError:
     import mock
+
+unknown_error_result = ProcessResult('test')
+unknown_error_result.err = 'Unknown error'
 
 
 class DockerManagerTests(unittest.TestCase):
@@ -79,25 +84,66 @@ class DockerManagerTests(unittest.TestCase):
 
     @mock.patch('docker.manager.execute')
     def test_single_port_mappping(self, mock_run):
-        with Docker(ports_mapping=["4080:4080"]) as docker:
-            mock_run.assert_called_once_with(
-                'docker run -d -p 4080:4080 --name {0} {1} /bin/sleep {2}'.format(
-                    docker.container_name,
-                    docker.image,
-                    docker.timeout
-                ))
+        docker = Docker(ports_mapping=['4080:4080'])
+        docker.start()
+        mock_run.assert_called_once_with(
+            'docker run -d -p 4080:4080 --name {0} {1} /bin/sleep {2}'.format(
+                docker.container_name,
+                docker.image,
+                docker.timeout
+            ))
 
     @mock.patch('docker.manager.execute')
     def test_multiple_port_mapppings(self, mock_run):
         ports = ["4080:4080", "8080:8080", "4443:4443"]
-        with Docker(ports_mapping=ports) as docker:
-            mock_run.assert_called_once_with(
-                'docker run -d {0} --name {1} {2} /bin/sleep {3}'.format(
-                    ' '.join(["-p {0}".format(port_mapping) for port_mapping in ports]),
-                    docker.container_name,
-                    docker.image,
-                    docker.timeout
-                ))
+        docker = Docker(ports_mapping=ports)
+        docker.start()
+        mock_run.assert_called_once_with(
+            'docker run -d {0} --name {1} {2} /bin/sleep {3}'.format(
+                ' '.join(["-p {0}".format(port_mapping) for port_mapping in ports]),
+                docker.container_name,
+                docker.image,
+                docker.timeout
+            ))
+
+    @mock.patch('docker.manager.execute')
+    @mock.patch('docker.manager.Docker.run', return_value=unknown_error_result)
+    def test_read_file_unknown_error(self, mock_run, mock_execute):
+        docker = Docker()
+        docker.start()
+        path = 'test-file'
+        self.assertRaisesRegexp(
+            DockerWrapperBaseError,
+            unknown_error_result.err,
+            docker.read_file,
+            path
+        )
+
+    @mock.patch('docker.manager.execute')
+    @mock.patch('docker.manager.Docker.run', return_value=unknown_error_result)
+    def test_list_files_unknown_error(self, mock_run, mock_execute):
+        docker = Docker()
+        docker.start()
+        path = 'path'
+        self.assertRaisesRegexp(
+            DockerWrapperBaseError,
+            unknown_error_result.err,
+            docker.list_files,
+            path
+        )
+
+    @mock.patch('docker.manager.execute')
+    @mock.patch('docker.manager.Docker.run', return_value=unknown_error_result)
+    def test_list_directories_unknown_error(self, mock_run, mock_execute):
+        docker = Docker()
+        docker.start()
+        path = 'path'
+        self.assertRaisesRegexp(
+            DockerWrapperBaseError,
+            unknown_error_result.err,
+            docker.list_directories,
+            path
+        )
 
 
 class DockerInteractionTests(unittest.TestCase):
@@ -113,6 +159,15 @@ class DockerInteractionTests(unittest.TestCase):
         self.docker.run('touch file2')
         self.assertEqual(self.docker.list_files(''), ['file1', 'file2'])
 
+    def test_list_files_bad_path(self):
+        path = '/bad/path'
+        self.assertRaisesRegexp(
+            DockerFileNotFoundError,
+            'Could not find the file or directory at path {0}'.format(path),
+            self.docker.list_files,
+            path
+        )
+
     def test_list_directories(self):
         self.docker.run('mkdir dir1')
         self.docker.run('mkdir dir1/test')
@@ -121,6 +176,15 @@ class DockerInteractionTests(unittest.TestCase):
         self.assertEqual(
             self.docker.list_directories('', include_trailing_slash=False),
             ['dir1', 'dir2', 'dir3']
+        )
+
+    def test_list_directories_bad_path(self):
+        path = '/bad/path'
+        self.assertRaisesRegexp(
+            DockerFileNotFoundError,
+            'Could not find the file or directory at path {0}'.format(path),
+            self.docker.list_directories,
+            path
         )
 
     def test_create_and_list_files_in_sub_directory(self):
@@ -137,7 +201,13 @@ class DockerInteractionTests(unittest.TestCase):
         self.assertEqual(self.docker.read_file(file_name), file_content)
 
     def test_read_file_that_dont_exist(self):
-        self.assertIsNone(self.docker.read_file('no-file.txt'))
+        path = '/bad/path'
+        self.assertRaisesRegexp(
+            DockerFileNotFoundError,
+            'Could not find the file or directory at path {0}'.format(path),
+            self.docker.read_file,
+            path
+        )
 
     def test_directory_exist(self):
         self.assertTrue(self.docker.directory_exist('~/'))

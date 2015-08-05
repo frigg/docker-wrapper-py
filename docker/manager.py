@@ -5,7 +5,7 @@ import uuid
 from collections import OrderedDict
 from time import sleep
 
-from docker.errors import DockerUnavailableError
+from docker import errors
 from docker.helpers import execute
 
 logger = logging.getLogger(__name__)
@@ -115,12 +115,19 @@ class Docker(object):
         :type path: str
         :return: The content of the file
         :rtype: str
+        :raises DockerFileNotFoundError: If given an invalid path
+        :raises DockerWrapperBaseError: For other errors
         """
         path = self._get_working_directory(path)
         result = self.run('cat {0}'.format(path))
-        if result.succeeded:
-            return result.out
-        return None
+
+        if not result.succeeded:
+            if errors.FILE_NOT_FOUND_PREDICATE in result.err:
+                raise errors.DockerFileNotFoundError(path)
+
+            raise errors.DockerWrapperBaseError(result.err)
+
+        return result.out
 
     def write_file(self, path, content, append=False):
         """
@@ -170,17 +177,26 @@ class Docker(object):
         :type path: str
         :return: An list of file names
         :rtype: list
+        :raises DockerFileNotFoundError: If given an invalid path
+        :raises DockerWrapperBaseError: For other errors
         """
-        result = []
 
+        files = []
         path = self._get_working_directory(path)
+        result = self.run('ls -m {0}'.format(path))
 
-        for file_path in self.run('ls -m {0}'.format(path)).out.split(', '):
+        if not result.succeeded:
+            if errors.FILE_NOT_FOUND_PREDICATE in result.err:
+                raise errors.DockerFileNotFoundError(path)
+
+            raise errors.DockerWrapperBaseError(result.err)
+
+        for file_path in result.out.split(', '):
             full_path = os.path.join(path, file_path)
             if self.file_exist(full_path) and not self.directory_exist(full_path):
-                result.append(file_path)
+                files.append(file_path)
 
-        return result
+        return files
 
     def list_directories(self, path, include_trailing_slash=True):
         """
@@ -190,20 +206,29 @@ class Docker(object):
         :type path: str
         :return: An list of directory names
         :rtype: list
+        :raises DockerFileNotFoundError: If given an invalid path
+        :raises DockerWrapperBaseError: For other errors
         """
-        result = []
 
-        working_directory = self._get_working_directory(path)
+        files = []
+        path = self._get_working_directory(path)
+        result = self.run('ls -dm */'.format(path), path)
 
-        for file_path in self.run('ls -dm */'.format(path), working_directory).out.split(', '):
+        if not result.succeeded:
+            if errors.FILE_NOT_FOUND_PREDICATE in result.err:
+                raise errors.DockerFileNotFoundError(path)
+
+            raise errors.DockerWrapperBaseError(result.err)
+
+        for file_path in result.out.split(', '):
             if self.directory_exist(os.path.join(path, file_path)):
 
                 if include_trailing_slash:
-                    result.append(file_path)
+                    files.append(file_path)
                 else:
-                    result.append(file_path[:-1])
+                    files.append(file_path[:-1])
 
-        return result
+        return files
 
     def start(self):
         """
@@ -222,10 +247,12 @@ class Docker(object):
             self.image,
             self.timeout
         ))
+
         if not result.succeeded:
-            raise DockerUnavailableError(
+            raise errors.DockerUnavailableError(
                 'Starting the docker container failed.\n{0}'.format(result.err)
             )
+
         return self
 
     def stop(self):
