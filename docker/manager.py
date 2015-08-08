@@ -212,7 +212,7 @@ class Docker(object):
 
         files = []
         path = self._get_working_directory(path)
-        result = self.run('ls -dm */'.format(path), path)
+        result = self.run('ls -dm */', path)
 
         if not result.succeeded:
             if errors.FILE_NOT_FOUND_PREDICATE in result.err:
@@ -221,12 +221,10 @@ class Docker(object):
             raise errors.DockerWrapperBaseError(result.err)
 
         for file_path in result.out.split(', '):
-            if self.directory_exist(os.path.join(path, file_path)):
-
-                if include_trailing_slash:
-                    files.append(file_path)
-                else:
-                    files.append(file_path[:-1])
+            if include_trailing_slash:
+                files.append(file_path)
+            else:
+                files.append(file_path[:-1])
 
         return files
 
