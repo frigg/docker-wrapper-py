@@ -178,6 +178,16 @@ class DockerInteractionTests(unittest.TestCase):
             ['dir1', 'dir2', 'dir3']
         )
 
+    def test_list_directories_trailing_slash(self):
+        self.docker.run('mkdir dir1')
+        self.docker.run('mkdir dir1/test')
+        self.docker.run('mkdir dir2')
+        self.docker.run('mkdir dir3')
+        self.assertEqual(
+            self.docker.list_directories('', include_trailing_slash=True),
+            ['dir1/', 'dir2/', 'dir3/']
+        )
+
     def test_list_directories_bad_path(self):
         path = '/bad/path'
         self.assertRaisesRegexp(

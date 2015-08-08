@@ -1,5 +1,4 @@
 import logging
-import os
 import re
 import uuid
 from collections import OrderedDict
@@ -181,9 +180,11 @@ class Docker(object):
         :raises DockerWrapperBaseError: For other errors
         """
 
-        files = []
         path = self._get_working_directory(path)
-        result = self.run('ls -m {0}'.format(path))
+
+        # `grep -v /$` matches everything that doesn't end with a
+        # trailing slash, i.e. only files since `ls -p` is used:
+        result = self.run('ls -p | grep --color=never -v /$', path)
 
         if not result.succeeded:
             if errors.FILE_NOT_FOUND_PREDICATE in result.err:
@@ -191,12 +192,7 @@ class Docker(object):
 
             raise errors.DockerWrapperBaseError(result.err)
 
-        for file_path in result.out.split(', '):
-            full_path = os.path.join(path, file_path)
-            if self.file_exist(full_path) and not self.directory_exist(full_path):
-                files.append(file_path)
-
-        return files
+        return result.out.split('\n')
 
     def list_directories(self, path, include_trailing_slash=True):
         """
@@ -212,7 +208,7 @@ class Docker(object):
 
         files = []
         path = self._get_working_directory(path)
-        result = self.run('ls -dm */'.format(path), path)
+        result = self.run('ls -dm */', path)
 
         if not result.succeeded:
             if errors.FILE_NOT_FOUND_PREDICATE in result.err:
@@ -221,12 +217,10 @@ class Docker(object):
             raise errors.DockerWrapperBaseError(result.err)
 
         for file_path in result.out.split(', '):
-            if self.directory_exist(os.path.join(path, file_path)):
-
-                if include_trailing_slash:
-                    files.append(file_path)
-                else:
-                    files.append(file_path[:-1])
+            if include_trailing_slash:
+                files.append(file_path)
+            else:
+                files.append(file_path[:-1])
 
         return files
 
