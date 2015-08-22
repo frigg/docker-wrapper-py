@@ -70,9 +70,9 @@ class DockerManagerTests(unittest.TestCase):
         docker.run('echo "hi there"')
         docker.run("echo 'hi there'")
         expected = ('docker exec -i {} bash -c \'cd ~/ &&  echo "hi there" ;  '
-                    'echo "--return-$?--"\''.format(docker.container_name))
+                    'echo "--return-$?--"\''.format(docker.container_name), '')
 
-        mock_run.assert_has_calls([mock.call(expected), mock.call(expected)])
+        mock_run.assert_has_calls([mock.call(*expected), mock.call(*expected)])
 
     @mock.patch('docker.manager.execute')
     @mock.patch('re.search', lambda *x: None)
@@ -80,7 +80,8 @@ class DockerManagerTests(unittest.TestCase):
         docker = Docker(env_variables={'CI': 1, 'FRIGG': 1})
         docker.run('ls')
         mock_run.assert_called_once_with('docker exec -i {} bash -c \'cd ~/ && CI=1 FRIGG=1 ls ;'
-                                         '  echo "--return-$?--"\''.format(docker.container_name))
+                                         '  echo "--return-$?--"\''.format(docker.container_name),
+                                         '')
 
     @mock.patch('docker.manager.execute')
     def test_single_port_mappping(self, mock_run):
@@ -252,6 +253,14 @@ class DockerInteractionTests(unittest.TestCase):
         old_content = 'hi'
         content = 'this is a readme'
         self.docker.run('echo "{0}" > {1}'.format(old_content, path))
+
+        self.docker.write_file(path, content, append=False)
+        written_content = self.docker.read_file(path)
+        self.assertEqual(written_content, content)
+
+    def test_write_file_quotes(self):
+        path = 'readme.txt'
+        content = 'this is a "readme"'
 
         self.docker.write_file(path, content, append=False)
         written_content = self.docker.read_file(path)
