@@ -20,19 +20,20 @@ class ProcessResult(object):
         return self.return_code == 0
 
 
-def execute(cmd):
+def execute(cmd, stdin=''):
     result = ProcessResult(command=cmd)
 
     logger.debug('Running command: "{0}"'.format(cmd))
     process = subprocess.Popen(
         cmd,
         shell=True,
+        stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         close_fds=True
     )
 
-    (stdout, stderr) = process.communicate()
+    (stdout, stderr) = process.communicate(str.encode(stdin))
     result.out = stdout.decode('utf-8').strip() if stdout else ''
     result.err = stderr.decode('utf-8').strip() if stderr else ''
     result.return_code = process.returncode

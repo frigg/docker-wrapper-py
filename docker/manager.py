@@ -61,7 +61,7 @@ class Docker(object):
         if exc_value:
             raise exc_value
 
-    def run(self, command, working_directory=''):
+    def run(self, command, working_directory='', stdin=''):
         """
         Runs the command with docker exec in the given working directory.
 
@@ -72,6 +72,7 @@ class Docker(object):
                                   will be evaluated with ``_get_working_directory``, thus relative
                                   paths will become absolute paths.
         :type working_directory: str
+        :type stdin: str
         :return: A ProcessResult object containing information on the result of the command.
         :rtype: ProcessResult
         """
@@ -95,7 +96,8 @@ class Docker(object):
                     command=command,
                     envs=env_string
                 )
-            )
+            ),
+            stdin
         )
 
         return_code_match = re.search(r'(?:\\n)?--return-(\d+)--$', result.out)
@@ -144,7 +146,7 @@ class Docker(object):
         """
         path = self._get_working_directory(path)
         modifier = '>>' if append else '>'
-        return self.run('echo "{0}" {1} {2}'.format(content, modifier, path))
+        return self.run('cat {0} {1}'.format(modifier, path), stdin=content)
 
     def file_exist(self, path):
         """
