@@ -69,8 +69,9 @@ class DockerManagerTests(unittest.TestCase):
         docker = Docker()
         docker.run('echo "hi there"')
         docker.run("echo 'hi there'")
-        expected = ('docker exec -i {} bash -c \'cd ~/ &&  echo "hi there" ;  '
-                    'echo "--return-$?--"\''.format(docker.container_name), '')
+        expected = (
+            'docker exec -i {} bash -c \'cd ~/ &&  echo "hi there"\''.format(docker.container_name),
+            '')
 
         mock_run.assert_has_calls([mock.call(*expected), mock.call(*expected)])
 
@@ -79,9 +80,9 @@ class DockerManagerTests(unittest.TestCase):
     def test_env_variables(self, mock_run):
         docker = Docker(env_variables={'CI': 1, 'FRIGG': 1})
         docker.run('ls')
-        mock_run.assert_called_once_with('docker exec -i {} bash -c \'cd ~/ && CI=1 FRIGG=1 ls ;'
-                                         '  echo "--return-$?--"\''.format(docker.container_name),
-                                         '')
+        mock_run.assert_called_once_with(
+            'docker exec -i {} bash -c \'cd ~/ && CI=1 FRIGG=1 ls\''.format(docker.container_name),
+            '')
 
     @mock.patch('docker.manager.execute')
     def test_single_port_mappping(self, mock_run):
@@ -206,9 +207,8 @@ class DockerInteractionTests(unittest.TestCase):
 
     def test_read_file_with_content(self):
         file_name = 'readme.txt'
-        file_content = 'this is a test file {0}'.format(randint(5000, 5500))
-        self.docker.run('echo \"{0}\" > ~/{1}; cat readme.txt'.format(file_content, file_name))
-
+        file_content = 'this is a test file {0}\n'.format(randint(5000, 5500))
+        self.docker.write_file(file_name, file_content)
         self.assertEqual(self.docker.read_file(file_name), file_content)
 
     def test_read_file_that_dont_exist(self):
@@ -219,6 +219,17 @@ class DockerInteractionTests(unittest.TestCase):
             self.docker.read_file,
             path
         )
+
+    def test_read_file_eof_newline(self):
+        path = '/etc/hostname'
+        content = self.docker.read_file(path)
+        self.assertTrue(content.endswith('\n'))
+
+    def test_write_file_read_file(self):
+        path = 'testfile'
+        content = 'this is a nice file\n'
+        self.docker.write_file(path, content)
+        self.assertEqual(content, self.docker.read_file(path))
 
     def test_directory_exist(self):
         self.assertTrue(self.docker.directory_exist('~/'))
@@ -233,15 +244,16 @@ class DockerInteractionTests(unittest.TestCase):
         self.docker.combine_outputs = True
         result = self.docker.run('ls does-not-exist')
         self.assertEqual(result.err, '')
-        self.assertEqual(result.out, 'ls: cannot access does-not-exist: No such file or directory')
+        self.assertEqual(result.out,
+                         'ls: cannot access does-not-exist: No such file or directory\n')
 
     def test_privilege(self):
         Docker(privilege=True).start()
 
     def test_write_file_append(self):
         path = 'readme.txt'
-        old_content = 'hi'
-        content = 'this is a readme'
+        old_content = 'hi\n'
+        content = 'this is a readme\n'
         self.docker.run('echo "{0}" > {1}'.format(old_content, path))
 
         self.docker.write_file(path, content, append=True)
@@ -251,7 +263,7 @@ class DockerInteractionTests(unittest.TestCase):
     def test_write_file_no_append(self):
         path = 'readme.txt'
         old_content = 'hi'
-        content = 'this is a readme'
+        content = 'this is a readme\n'
         self.docker.run('echo "{0}" > {1}'.format(old_content, path))
 
         self.docker.write_file(path, content, append=False)
@@ -260,8 +272,16 @@ class DockerInteractionTests(unittest.TestCase):
 
     def test_write_file_quotes(self):
         path = 'readme.txt'
-        content = 'this is a "readme"'
+        content = 'this is a "readme"\n'
 
         self.docker.write_file(path, content, append=False)
         written_content = self.docker.read_file(path)
         self.assertEqual(written_content, content)
+
+    def test_run_return_code(self):
+        code = 4
+        path = 'testfile'
+        content = 'exit {0}\n'.format(code)
+        self.docker.write_file(path, content)
+        result = self.docker.run('bash {0}'.format(path))
+        self.assertEqual(code, result.return_code)

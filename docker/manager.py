@@ -1,5 +1,4 @@
 import logging
-import re
 import uuid
 from collections import OrderedDict
 from time import sleep
@@ -88,7 +87,7 @@ class Docker(object):
         ])
 
         result = execute(
-            'docker exec -i {container} bash -c \'{command} ;  echo "--return-$?--"\''.format(
+            'docker exec -i {container} bash -c \'{command}\''.format(
                 envs=env_string,
                 container=self.container_name,
                 command=command_string.format(
@@ -100,12 +99,6 @@ class Docker(object):
             stdin
         )
 
-        return_code_match = re.search(r'(?:\\n)?--return-(\d+)--$', result.out)
-        if return_code_match:
-            result.return_code = int(return_code_match.group(1))
-            result.out = result.out.replace(return_code_match.group(0), '')
-            if result.out.endswith('\n'):
-                result.out = result.out[:len(result.out) - 1]
         return result
 
     def read_file(self, path):
@@ -194,7 +187,7 @@ class Docker(object):
 
             raise errors.DockerWrapperBaseError(result.err)
 
-        return result.out.split('\n')
+        return result.out.strip().split('\n')
 
     def list_directories(self, path, include_trailing_slash=True):
         """
@@ -218,7 +211,7 @@ class Docker(object):
 
             raise errors.DockerWrapperBaseError(result.err)
 
-        for file_path in result.out.split(', '):
+        for file_path in result.out.strip().split(', '):
             if include_trailing_slash:
                 files.append(file_path)
             else:
