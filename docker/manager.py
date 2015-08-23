@@ -187,7 +187,7 @@ class Docker(object):
 
             raise errors.DockerWrapperBaseError(result.err)
 
-        return result.out.split('\n')
+        return result.out.strip().split('\n')
 
     def list_directories(self, path, include_trailing_slash=True):
         """
@@ -211,7 +211,7 @@ class Docker(object):
 
             raise errors.DockerWrapperBaseError(result.err)
 
-        for file_path in result.out.split(', '):
+        for file_path in result.out.strip().split(', '):
             if include_trailing_slash:
                 files.append(file_path)
             else:

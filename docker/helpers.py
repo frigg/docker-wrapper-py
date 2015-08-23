@@ -34,8 +34,8 @@ def execute(cmd, stdin=''):
     )
 
     (stdout, stderr) = process.communicate(str.encode(stdin))
-    result.out = stdout.decode('utf-8').strip() if stdout else ''
-    result.err = stderr.decode('utf-8').strip() if stderr else ''
+    result.out = stdout.decode('utf-8') if stdout else ''
+    result.err = stderr.decode('utf-8') if stderr else ''
     result.return_code = process.returncode
     logger.debug('Finished running of: {0}'.format(result.__dict__))
     return result
