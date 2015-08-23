@@ -69,8 +69,9 @@ class DockerManagerTests(unittest.TestCase):
         docker = Docker()
         docker.run('echo "hi there"')
         docker.run("echo 'hi there'")
-        expected = ('docker exec -i {} bash -c \'cd ~/ &&  echo "hi there" ;  '
-                    'echo "--return-$?--"\''.format(docker.container_name), '')
+        expected = (
+            'docker exec -i {} bash -c \'cd ~/ &&  echo "hi there"\''.format(docker.container_name),
+            '')
 
         mock_run.assert_has_calls([mock.call(*expected), mock.call(*expected)])
 
@@ -79,9 +80,9 @@ class DockerManagerTests(unittest.TestCase):
     def test_env_variables(self, mock_run):
         docker = Docker(env_variables={'CI': 1, 'FRIGG': 1})
         docker.run('ls')
-        mock_run.assert_called_once_with('docker exec -i {} bash -c \'cd ~/ && CI=1 FRIGG=1 ls ;'
-                                         '  echo "--return-$?--"\''.format(docker.container_name),
-                                         '')
+        mock_run.assert_called_once_with(
+            'docker exec -i {} bash -c \'cd ~/ && CI=1 FRIGG=1 ls\''.format(docker.container_name),
+            '')
 
     @mock.patch('docker.manager.execute')
     def test_single_port_mappping(self, mock_run):
@@ -265,3 +266,11 @@ class DockerInteractionTests(unittest.TestCase):
         self.docker.write_file(path, content, append=False)
         written_content = self.docker.read_file(path)
         self.assertEqual(written_content, content)
+
+    def test_run_return_code(self):
+        code = 4
+        path = 'testfile'
+        content = 'exit {0}\n'.format(code)
+        self.docker.write_file(path, content)
+        result = self.docker.run('bash {0}'.format(path))
+        self.assertEqual(code, result.return_code)
