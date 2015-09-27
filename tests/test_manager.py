@@ -70,8 +70,11 @@ class DockerManagerTests(unittest.TestCase):
         docker.run('echo "hi there"')
         docker.run("echo 'hi there'")
         expected = (
-            'docker exec -i {} bash -c \'cd ~/ &&  echo "hi there"\''.format(docker.container_name),
-            '')
+            'docker exec -i -t {} bash --login -c \'cd ~/ &&  echo "hi there"\''.format(
+                docker.container_name
+            ),
+            ''
+        )
 
         mock_run.assert_has_calls([mock.call(*expected), mock.call(*expected)])
 
@@ -81,8 +84,21 @@ class DockerManagerTests(unittest.TestCase):
         docker = Docker(env_variables={'CI': 1, 'FRIGG': 1})
         docker.run('ls')
         mock_run.assert_called_once_with(
-            'docker exec -i {} bash -c \'cd ~/ && CI=1 FRIGG=1 ls\''.format(docker.container_name),
-            '')
+            'docker exec -i -t {} bash --login -c \'cd ~/ && CI=1 FRIGG=1 ls\''.format(
+                docker.container_name
+            ),
+            ''
+        )
+
+    @mock.patch('docker.manager.execute')
+    @mock.patch('re.search', lambda *x: None)
+    def test_no_login(self, mock_run):
+        docker = Docker()
+        docker.run('ls', login=False)
+        mock_run.assert_called_once_with(
+            'docker exec -i -t {} bash -c \'cd ~/ &&  ls\''.format(docker.container_name),
+            ''
+        )
 
     @mock.patch('docker.manager.execute')
     def test_single_port_mappping(self, mock_run):
