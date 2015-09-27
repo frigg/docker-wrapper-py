@@ -60,7 +60,7 @@ class Docker(object):
         if exc_value:
             raise exc_value
 
-    def run(self, command, working_directory='', stdin='', login=True):
+    def run(self, command, working_directory='', stdin='', login=True, tty=True):
         """
         Runs the command with docker exec in the given working directory.
 
@@ -74,6 +74,8 @@ class Docker(object):
         :type stdin: str
         :param login: Will add --login on the bash call.
         :type login: boolean
+        :param tty: Will add -t on the bash call.
+        :type tty: boolean
         :return: A ProcessResult object containing information on the result of the command.
         :rtype: ProcessResult
         """
@@ -89,10 +91,11 @@ class Docker(object):
         ])
 
         result = execute(
-            'docker exec -i {container} bash {login} -c \'{command}\''.format(
+            'docker exec -i{tty} {container} bash{login} -c \'{command}\''.format(
                 envs=env_string,
                 container=self.container_name,
-                login='--login' if login else '',
+                login=' --login' if login else '',
+                tty=' -t' if tty else '',
                 command=command_string.format(
                     working_directory=working_directory,
                     command=command,
