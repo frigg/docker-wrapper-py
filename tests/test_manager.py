@@ -67,8 +67,8 @@ class DockerManagerTests(unittest.TestCase):
     @mock.patch('re.search', lambda *x: None)
     def test_quotation_mark_handling(self, mock_run):
         docker = Docker()
-        docker.run('echo "hi there"')
-        docker.run("echo 'hi there'")
+        docker.run('echo "hi there"', login=True, tty=True)
+        docker.run("echo 'hi there'", login=True, tty=True)
         expected = (
             'docker exec -i -t {} bash --login -c \'cd ~/ &&  echo "hi there"\''.format(
                 docker.container_name
@@ -96,7 +96,7 @@ class DockerManagerTests(unittest.TestCase):
         docker = Docker()
         docker.run('ls', login=False)
         mock_run.assert_called_once_with(
-            'docker exec -i -t {} bash -c \'cd ~/ &&  ls\''.format(docker.container_name),
+            'docker exec -i {} bash -c \'cd ~/ &&  ls\''.format(docker.container_name),
             ''
         )
 

@@ -60,7 +60,7 @@ class Docker(object):
         if exc_value:
             raise exc_value
 
-    def run(self, command, working_directory='', stdin='', login=True, tty=True):
+    def run(self, command, working_directory='', stdin='', login=False, tty=False):
         """
         Runs the command with docker exec in the given working directory.
 
