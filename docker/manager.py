@@ -185,7 +185,7 @@ class Docker(object):
 
         # `grep -v /$` matches everything that doesn't end with a
         # trailing slash, i.e. only files since `ls -p` is used:
-        result = self.run('ls -p | grep --color=never -v /$', path)
+        result = self.run('ls -p | grep -v /$', path)
 
         if not result.succeeded:
             if errors.FILE_NOT_FOUND_PREDICATE in result.err:
