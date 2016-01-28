@@ -82,9 +82,9 @@ class DockerManagerTests(unittest.TestCase):
     @mock.patch('re.search', lambda *x: None)
     def test_env_variables(self, mock_run):
         docker = Docker(env_variables={'CI': 1, 'FRIGG': 1})
-        docker.run('ls')
+        docker.run('ls', login=True)
         mock_run.assert_called_once_with(
-            'docker exec -i -t {} bash --login -c \'cd ~/ && CI=1 FRIGG=1 ls\''.format(
+            'docker exec -i {0} bash --login -c \'cd ~/ && CI=1 FRIGG=1 ls\''.format(
                 docker.container_name
             ),
             ''
