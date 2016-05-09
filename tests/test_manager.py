@@ -173,9 +173,29 @@ class DockerInteractionTests(unittest.TestCase):
         self.docker.stop()
 
     def test_list_files(self):
-        self.docker.run('touch file1')
-        self.docker.run('touch file2')
-        self.assertEqual(self.docker.list_files(''), ['file1', 'file2'])
+        self.docker.run('mkdir test')
+        self.docker.run('touch test/file1')
+        self.docker.run('touch test/file2')
+        self.assertEqual(self.docker.list_files('test'), ['file1', 'file2'])
+
+    def test_list_files_empty_dir(self):
+        self.docker.run('mkdir empty')
+        self.assertEqual(self.docker.list_files('empty'), [])
+
+    def test_list_files_only_dirs(self):
+        self.docker.run('mkdir -p test/dir')
+        self.assertEqual(self.docker.list_files('test'), [])
+
+    def test_list_files_include_hidden_enabled(self):
+        self.docker.run('mkdir test')
+        self.docker.run('touch test/.hidden')
+        self.assertEqual(self.docker.list_files('test', include_hidden=True), ['.hidden'])
+
+    def test_list_files_include_hidden_disabled(self):
+        self.docker.run('mkdir test')
+        self.docker.run('touch test/.hidden')
+        self.docker.run('touch test/not-hidden')
+        self.assertEqual(self.docker.list_files('test'), ['not-hidden'])
 
     def test_list_files_bad_path(self):
         path = '/bad/path'
@@ -261,7 +281,7 @@ class DockerInteractionTests(unittest.TestCase):
         result = self.docker.run('ls does-not-exist')
         self.assertEqual(result.err, '')
         self.assertEqual(result.out,
-                         'ls: cannot access does-not-exist: No such file or directory\n')
+                         "ls: cannot access 'does-not-exist': No such file or directory\n")
 
     def test_privilege(self):
         Docker(privilege=True).start()
