@@ -169,12 +169,14 @@ class Docker(object):
         path = self._get_working_directory(path)
         return self.run('test -d {0}'.format(path)).return_code == 0
 
-    def list_files(self, path):
+    def list_files(self, path, include_hidden=False):
         """
         List files on a given path.
 
         :param path: The path to the directory.
         :type path: str
+        :param include_hidden: Include hidden files in output
+        :type include_hidden: bool
         :return: An list of file names
         :rtype: list
         :raises DockerFileNotFoundError: If given an invalid path
@@ -183,9 +185,10 @@ class Docker(object):
 
         path = self._get_working_directory(path)
 
-        # `grep -v /$` matches everything that doesn't end with a
-        # trailing slash, i.e. only files since `ls -p` is used:
-        result = self.run('ls -p | grep -v /$', path)
+        # Ignore dot files (hidden files) if include_hidden is enabled:
+        predicate = '' if include_hidden else '-not -path "*/\.*"'
+        # The printf part turns './file' into 'file':
+        result = self.run('find . {0} -maxdepth 1 -type f -printf "%P\n"'.format(predicate), path)
 
         if not result.succeeded:
             if errors.FILE_NOT_FOUND_PREDICATE in result.err:
@@ -193,7 +196,8 @@ class Docker(object):
 
             raise errors.DockerWrapperBaseError(result.err)
 
-        return result.out.strip().split('\n')
+        out = result.out.strip()
+        return sorted(out.split('\n')) if out else []
 
     def list_directories(self, path, include_trailing_slash=True):
         """
