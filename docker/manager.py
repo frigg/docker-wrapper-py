@@ -187,8 +187,8 @@ class Docker(object):
 
         # Ignore dot files (hidden files) if include_hidden is enabled:
         predicate = '' if include_hidden else '-not -path "*/\.*"'
-        # The printf part turns './file' into 'file':
-        result = self.run('find . {0} -maxdepth 1 -type f -printf "%P\n"'.format(predicate), path)
+        # cut makes sure we turn './file' into 'file'
+        result = self.run('find . {0} -maxdepth 1 -type f | cut -c 3-'.format(predicate), path)
 
         if not result.succeeded:
             if errors.FILE_NOT_FOUND_PREDICATE in result.err:
